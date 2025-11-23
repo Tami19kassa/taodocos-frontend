@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
-const STRAPI_URL = 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 
 export default function PromotionCarousel({ promotions }) {
   const [currentIndex, setCurrentIndex] = useState(0);

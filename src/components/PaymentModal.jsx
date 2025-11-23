@@ -27,7 +27,7 @@ export default function PaymentModal({ isOpen, onClose, level }) {
           </div>
           
           <a 
-            href="https://t.me/YourTelegramHandle" 
+            href="https://t.me/tefera_tilahun" 
             target="_blank" 
             className="block w-full bg-amber-600 hover:bg-amber-500 text-black font-bold text-center py-4 rounded uppercase tracking-widest text-sm transition-colors"
           >

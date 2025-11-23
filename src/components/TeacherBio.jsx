@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { renderBlockText } from '@/utils/renderBlockText';
 import { ArrowRight } from 'lucide-react';
 
-const STRAPI_URL = 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 
 export default function TeacherBio({ teacher }) {
   if (!teacher) return null;

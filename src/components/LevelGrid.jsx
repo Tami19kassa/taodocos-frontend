@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Play, Lock, CheckCircle2 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
 
-const STRAPI_URL = 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 
 export default function LevelGrid({ levels, isUnlocked, onLevelClick }) {
   return (
