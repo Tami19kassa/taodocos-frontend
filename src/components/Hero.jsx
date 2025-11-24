@@ -1,22 +1,23 @@
 import { motion } from 'framer-motion';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
+// FIX: Added fallback to localhost so it doesn't crash if env var is missing
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
 };
 
- 
 export default function Hero({ landing }) {
   const title = landing?.hero_title || "The Ancient Harp";
   const subtitle = landing?.hero_subtitle || "Master the sacred sounds.";
   
-  // FIX:
+  // FIX: Handle Cloudinary vs Local URLs
   const rawUrl = landing?.hero_background?.url;
   const bgImage = rawUrl 
     ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
-    : null
+    : null;
+
   return (
     <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
       
@@ -26,7 +27,8 @@ export default function Hero({ landing }) {
           <img 
             src={bgImage} 
             alt="Hero Background" 
-            className="w-full h-full object-cover opacity-40" 
+            // Added 'object-top' so faces/heads aren't cut off
+            className="w-full h-full object-cover object-top opacity-40" 
           />
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#030305] via-[#030305]/80 to-transparent" />
