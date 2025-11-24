@@ -12,8 +12,10 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
   const welcomeTitle = landing?.hero_title || "Sanctuary Entrance";
   const welcomeSubtitle = landing?.hero_subtitle || "Begin your journey into the sacred sounds.";
   
-  const bgImage = landing?.hero_background?.url 
-    ? `${STRAPI_URL}${landing.hero_background.url}` 
+  // FIX: Check if URL is absolute (Cloudinary) or relative (Local)
+  const rawUrl = landing?.hero_background?.url;
+  const bgImage = rawUrl 
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
     : null;
 
   const handleSubmit = (e) => {

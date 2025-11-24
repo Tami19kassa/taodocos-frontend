@@ -7,8 +7,9 @@ const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 export default function TeacherBio({ teacher }) {
   if (!teacher) return null;
 
-  const imageUrl = teacher.photo?.url 
-    ? `${STRAPI_URL}${teacher.photo.url}` 
+  const rawUrl = teacher.photo?.url;
+  const imageUrl = rawUrl 
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
     : null;
 
   return (

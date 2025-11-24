@@ -15,8 +15,12 @@ export default function LevelGrid({ levels, isUnlocked, onLevelClick }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         {levels.map((level, index) => {
           const unlocked = isUnlocked(level);
-          const coverUrl = level.cover?.url ? `${STRAPI_URL}${level.cover.url}` : null;
           
+          // FIX: Handle Cloudinary URLs
+          const rawUrl = level.cover?.url;
+          const coverUrl = rawUrl 
+            ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
+            : null;
           // Highlight the middle card (or the Advanced one) like the reference image
           const isHighlight = index === 1; 
 

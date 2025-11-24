@@ -18,8 +18,11 @@ export default function PromotionCarousel({ promotions }) {
   }, [promotions.length]);
 
   const currentPromo = promotions[currentIndex];
-  const imageUrl = currentPromo.banner?.url 
-    ? `${STRAPI_URL}${currentPromo.banner.url}` 
+  
+  // FIX: Handle Banner URLs
+  const rawUrl = currentPromo.banner?.url;
+  const imageUrl = rawUrl 
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
     : null;
 
   if (!imageUrl) return null;
