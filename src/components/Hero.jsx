@@ -7,22 +7,16 @@ const fadeInUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
 };
 
+ 
 export default function Hero({ landing }) {
-  // 1. Default Values (Fallbacks)
   const title = landing?.hero_title || "The Ancient Harp";
   const subtitle = landing?.hero_subtitle || "Master the sacred sounds.";
   
-  // 2. Safe Image Extraction (Handles Strapi v5 structure)
-  // Strapi v5 Single Type: landing.hero_background.url
-  let bgImage = null;
-  
-  if (landing?.hero_background?.url) {
-    bgImage = `${STRAPI_URL}${landing.hero_background.url}`;
-  } else if (landing?.hero_background?.data?.attributes?.url) {
-    // Fallback for older Strapi versions just in case
-    bgImage = `${STRAPI_URL}${landing.hero_background.data.attributes.url}`;
-  }
-
+  // FIX:
+  const rawUrl = landing?.hero_background?.url;
+  const bgImage = rawUrl 
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
+    : null
   return (
     <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
       
