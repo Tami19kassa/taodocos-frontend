@@ -10,10 +10,12 @@ import Hero from '@/components/Hero';
 import PromotionCarousel from '@/components/PromotionCarousel'; // New
 import LevelGrid from '@/components/LevelGrid';
 import Library from '@/components/Library';
+
 import TeacherBio from '@/components/TeacherBio';
 import Player from '@/components/Player';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer'; // New
+import Testimonials from '@/components/Testimonials'; // Add this
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
  
@@ -31,6 +33,7 @@ export default function Home() {
     teacher: null, 
     landing: null,
     promotions: [],
+     testimonials: [],
     settings: null,
     userOwnedLevels: [] 
   });
@@ -64,20 +67,20 @@ export default function Home() {
 
   // --- API ACTIONS ---
 
-  // 1. Fetch Data that doesn't require Login
-  const fetchPublicData = async () => {
+const fetchPublicData = async () => {
     try {
-      const [lRes, bRes, tRes, landingRes, promoRes, footerRes] = await Promise.all([
+      const [lRes, bRes, tRes, landingRes, promoRes, testRes, footerRes] = await Promise.all([
         fetch(`${STRAPI_URL}/api/levels?populate=*`), 
         fetch(`${STRAPI_URL}/api/books?populate=*`),
         fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`),
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`),
         fetch(`${STRAPI_URL}/api/promotions?populate=*`),
-        fetch(`${STRAPI_URL}/api/footer?populate=*`) // Assuming Single Type 'global-setting'
+        fetch(`${STRAPI_URL}/api/testimonials?populate=*`), // NEW
+        fetch(`${STRAPI_URL}/api/global-setting?populate=*`)
       ]);
 
-      const [l, b, t, landing, promos, footer] = await Promise.all([
-        lRes.json(), bRes.json(), tRes.json(), landingRes.json(), promoRes.json(), footerRes.json()
+      const [l, b, t, landing, promos, tests, footer] = await Promise.all([
+        lRes.json(), bRes.json(), tRes.json(), landingRes.json(), promoRes.json(), testRes.json(), footerRes.json()
       ]);
 
       setData(prev => ({
@@ -87,13 +90,13 @@ export default function Home() {
         teacher: t.data || null,
         landing: landing.data || null,
         promotions: promos.data || [],
+        testimonials: tests.data || [], // STORE IT
         settings: footer.data || null
       }));
     } catch (e) {
       console.error("Public Fetch Error:", e);
     }
   };
-
   // 2. Fetch User Data (Owned Levels)
   const fetchUserData = async (token, userId) => {
     try {
@@ -212,6 +215,7 @@ export default function Home() {
             
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
             <Library books={data.books} />
+            <Testimonials testimonials={data.testimonials} />
             <TeacherBio teacher={data.teacher} />
           </>
         ) : (
