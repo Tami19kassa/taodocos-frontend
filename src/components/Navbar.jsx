@@ -1,7 +1,14 @@
 import { motion } from 'framer-motion';
-import { Music, LogOut, Book, User } from 'lucide-react';
+import { Music, LogOut } from 'lucide-react';
 
 export default function Navbar({ user, onLogout, setView }) {
+  
+  // Helper to handle smooth scroll
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <motion.nav 
       initial={{ y: -100 }} 
@@ -13,28 +20,33 @@ export default function Navbar({ user, onLogout, setView }) {
         
         {/* LOGO */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
-          <div className="w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 bg-cyan-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
             <Music className="text-white w-5 h-5" />
           </div>
           <div>
             <span className="font-cinzel font-bold text-lg text-white tracking-wider block leading-none">TAODOCOS</span>
-            <span className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">School</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-[0.2em]">School</span>
           </div>
         </div>
         
-        {/* CENTER LINKS (Desktop) */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-stone-400">
+        {/* CENTER LINKS */}
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
           <button onClick={() => setView('home')} className="hover:text-white transition-colors relative group">
             Sanctuary
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 transition-all group-hover:w-full" />
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
-          <button onClick={() => document.getElementById('levels').scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors relative group">
+          <button onClick={() => scrollTo('levels')} className="hover:text-white transition-colors relative group">
             Levels
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 transition-all group-hover:w-full" />
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
-          <button onClick={() => document.getElementById('library').scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors relative group">
+          <button onClick={() => scrollTo('library')} className="hover:text-white transition-colors relative group">
             Library
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 transition-all group-hover:w-full" />
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
+          </button>
+          {/* NEW BUTTON */}
+          <button onClick={() => scrollTo('testimonials')} className="hover:text-white transition-colors relative group">
+            Voices
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
         </div>
 
@@ -42,12 +54,12 @@ export default function Navbar({ user, onLogout, setView }) {
         <div className="flex items-center gap-4">
            <div className="hidden sm:flex flex-col items-end">
               <p className="text-xs text-white font-bold">{user?.username}</p>
-              <p className="text-[10px] text-amber-500 uppercase tracking-wider">Student</p>
+              <p className="text-[10px] text-cyan-500 uppercase tracking-wider">Student</p>
            </div>
            <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
            <button 
              onClick={onLogout} 
-             className="bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-stone-400 p-2 rounded-lg transition-all"
+             className="bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-slate-400 p-2 rounded-lg transition-all"
              title="Sign Out"
            >
               <LogOut size={18} />

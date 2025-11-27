@@ -6,7 +6,7 @@ export default function Testimonials({ testimonials }) {
   if (!testimonials || testimonials.length === 0) return null;
 
   return (
-    <section className="py-32 px-4 relative overflow-hidden bg-[#05060a]">
+    <section id="testimonials" className="py-32 px-4 relative overflow-hidden bg-[#05060a]">
       
       {/* Background Decor */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none" />
