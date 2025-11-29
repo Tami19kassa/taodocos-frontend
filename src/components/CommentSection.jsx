@@ -12,7 +12,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
 
-  // 1. FETCH DATA (Now including 'liked_by')
+  // 1. FETCH DATA
   const fetchComments = async () => {
     try {
       const res = await fetch(`${STRAPI_URL}/api/comments?filters[lesson][id][$eq]=${lessonId}&populate=user&populate=parent&populate=liked_by&sort=createdAt:desc`, {
@@ -29,13 +29,16 @@ export default function CommentSection({ lessonId, jwt, user }) {
     fetchComments();
   }, [lessonId, jwt]);
 
-  // 2. HELPER: BUILD TREE
+  // 2. BUILD TREE (Fixes Reply nesting)
   const buildCommentTree = (flatComments) => {
     const roots = [];
     const childrenMap = {};
 
     flatComments.forEach(c => {
-      const parentId = c.parent?.id || c.attributes?.parent?.data?.id;
+      // Handle Strapi V5 vs V4 ID location
+      const parentData = c.parent || c.attributes?.parent?.data;
+      const parentId = parentData?.id;
+
       if (!parentId) {
         roots.push(c);
       } else {
@@ -65,7 +68,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
           }
         })
       });
-      await fetchComments(); // Refresh list from DB
+      await fetchComments(); // Reload to see new comment
       return true;
     } catch (err) {
       alert("Failed to post.");
@@ -75,31 +78,38 @@ export default function CommentSection({ lessonId, jwt, user }) {
     }
   };
 
-  // 4. TOGGLE LIKE (DATABASE UPDATE)
+  // 4. TOGGLE LIKE (SIMPLE VERSION)
   const handleLikeToggle = async (commentId, currentLikes) => {
-    // currentLikes is an array of Users who liked this comment
+    // 1. Calculate new list of User IDs
     const isLiked = currentLikes.some(u => u.id === user.id);
-    
-    // Optimistic UI Update (Make it feel instant)
+    let newLikesIds = currentLikes.map(u => u.id); // Get existing IDs
+
+    if (isLiked) {
+      // Remove me
+      newLikesIds = newLikesIds.filter(id => id !== user.id);
+    } else {
+      // Add me
+      newLikesIds.push(user.id);
+    }
+
+    // 2. Optimistic UI Update (Instant visual feedback)
     const updatedComments = comments.map(c => {
       if (c.id === commentId) {
-        let newLikes = isLiked 
-          ? currentLikes.filter(u => u.id !== user.id) // Remove me
-          : [...currentLikes, user]; // Add me
+        // We fake the user object so the UI updates instantly
+        const fakeUserObj = { id: user.id, username: user.username };
+        const newLikesObj = isLiked 
+          ? currentLikes.filter(u => u.id !== user.id)
+          : [...currentLikes, fakeUserObj];
         
-        // Handle Strapi structure structure for UI
-        return { ...c, liked_by: newLikes }; 
+        return { ...c, liked_by: newLikesObj };
       }
       return c;
     });
     setComments(updatedComments);
 
+    // 3. Send to Strapi
     try {
-      // Send to Backend
-      // We use 'connect' and 'disconnect' to update relations efficiently
-      const action = isLiked ? 'disconnect' : 'connect';
-      
-      await fetch(`${STRAPI_URL}/api/comments/${commentId}`, {
+      const res = await fetch(`${STRAPI_URL}/api/comments/${commentId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -107,14 +117,17 @@ export default function CommentSection({ lessonId, jwt, user }) {
         },
         body: JSON.stringify({
           data: {
-            liked_by: { [action]: [user.id] } 
+            liked_by: newLikesIds // Send the simple array of IDs
           }
         })
       });
-      // Silent success - no need to re-fetch immediately
+
+      if (!res.ok) {
+        console.error("Like failed", await res.text());
+        fetchComments(); // Revert if failed
+      }
     } catch (err) {
-      console.error("Like failed", err);
-      fetchComments(); // Revert on error
+      console.error("Network error", err);
     }
   };
 
@@ -177,23 +190,24 @@ export default function CommentSection({ lessonId, jwt, user }) {
 function CommentItem({ comment, replies, user, onReply, onLike, activeReplyId, setActiveReplyId }) {
   const [replyContent, setReplyContent] = useState('');
   
-  // Data extraction
   const content = comment.content || comment.attributes?.content;
-  const author = comment.user?.username || comment.attributes?.user?.data?.attributes?.username || "Student";
-  const date = new Date(comment.createdAt || comment.attributes?.createdAt).toLocaleDateString();
+  const authorData = comment.user || comment.attributes?.user?.data?.attributes;
+  const authorName = authorData?.username || "Student";
+  const rawDate = comment.createdAt || comment.attributes?.createdAt;
+  const date = new Date(rawDate).toLocaleDateString();
   
   // Like Logic
   const likesList = comment.liked_by || comment.attributes?.liked_by?.data || [];
   const likeCount = likesList.length;
-  const isLiked = likesList.some(u => u.id === user.id || u.attributes?.id === user.id);
+  const isLiked = likesList.some(u => u.id === user.id);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="group">
       <div className="flex gap-4">
-        <Avatar name={author} />
+        <Avatar name={authorName} />
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-slate-200 text-sm">{author}</span>
+            <span className="font-bold text-slate-200 text-sm">{authorName}</span>
             <span className="text-[10px] text-slate-600">• {date}</span>
           </div>
           
@@ -222,7 +236,7 @@ function CommentItem({ comment, replies, user, onReply, onLike, activeReplyId, s
                       type="text" 
                       value={replyContent} 
                       onChange={(e) => setReplyContent(e.target.value)} 
-                      placeholder={`Reply to ${author}...`} 
+                      placeholder={`Reply to ${authorName}...`} 
                       className="w-full bg-[#161726] border border-white/10 rounded-xl py-2 pl-4 pr-12 text-sm text-white focus:border-cyan-500/50 outline-none" 
                     />
                     <button 
@@ -247,7 +261,7 @@ function CommentItem({ comment, replies, user, onReply, onLike, activeReplyId, s
                 <CommentItem 
                   key={reply.id} 
                   comment={reply} 
-                  replies={[]} // Assuming 1 level depth for UI cleanliness
+                  replies={[]} 
                   user={user}
                   onReply={onReply}
                   onLike={onLike}
