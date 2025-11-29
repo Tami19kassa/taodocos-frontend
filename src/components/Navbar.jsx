@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Music, LogOut } from 'lucide-react';
 
 export default function Navbar({ user, onLogout, setView }) {
-
+  
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -38,13 +38,19 @@ export default function Navbar({ user, onLogout, setView }) {
             Levels
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
+          
+          {/* NEW HYMNS BUTTON */}
+          <button onClick={() => scrollTo('audio-gallery')} className="hover:text-white transition-colors relative group">
+            Hymns
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
+          </button>
+
           <button onClick={() => scrollTo('library')} className="hover:text-white transition-colors relative group">
             Library
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
-          {/* NEW BUTTON */}
           <button onClick={() => scrollTo('testimonials')} className="hover:text-white transition-colors relative group">
-            Testimonials
+            Voices
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-500 transition-all group-hover:w-full" />
           </button>
         </div>

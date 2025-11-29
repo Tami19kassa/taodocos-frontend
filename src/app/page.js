@@ -196,37 +196,60 @@ export default function Home() {
   if (loading && !data.landing) return <LoadingScreen />;
   if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} />;
 
+ // ... (inside Home function, before return)
+
+  // --- GLOBAL BACKGROUND LOGIC ---
+  const rawBgUrl = data.landing?.hero_background?.url;
+  const globalBgUrl = rawBgUrl 
+    ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
+    : null;
+
+  // ... (auth checks)
+
   return (
-    <main className="min-h-screen bg-[#0B0C15] flex flex-col">
+    <main className="min-h-screen relative">
+      
+      {/* --- GLOBAL WALLPAPER (Fixed Background) --- */}
+      <div className="fixed inset-0 z-[-1]">
+        {globalBgUrl ? (
+          <img 
+            src={globalBgUrl} 
+            className="w-full h-full object-cover opacity-20" // Low opacity so text is readable
+            alt="Global Background"
+          />
+        ) : (
+          <div className="w-full h-full bg-[#0B0C15]" />
+        )}
+        
+        {/* Gradient Overlay (Blue/Purple Tint) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B0C15]/90 via-[#0B0C15]/80 to-[#0B0C15]/95" />
+      </div>
+
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
       
-      <div className="flex-grow">
+      <div className="flex-grow relative z-10">
         {view === 'home' ? (
           <>
+            {/* ... sections ... */}
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
+            
+            {/* Added Audio Gallery */}
             <AudioGallery audios={data.audios} />
+            
             <Library books={data.books} />
             <Testimonials testimonials={data.testimonials} />
             <TeacherBio teacher={data.teacher} />
           </>
         ) : (
           <Player 
-            currentLesson={currentLesson} 
-            selectedLevel={selectedLevel} 
-            setCurrentLesson={setCurrentLesson} 
-            onExit={() => setView('home')}
-            isLevelUnlocked={isUnlocked(selectedLevel)}
-            jwt={jwt} 
-            user={user} 
-            onUnlockRequest={() => setModalOpen(true)}
+             // ... props
           />
         )}
       </div>
 
       <Footer settings={data.settings} />
-
       <PaymentModal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 

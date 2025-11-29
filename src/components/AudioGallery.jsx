@@ -27,7 +27,7 @@ export default function AudioGallery({ audios }) {
   };
 
   return (
-    <section className="py-24 px-4 relative z-10">
+    <section id="audio-gallery" className="py-24 px-4 relative z-10 bg-[#08090f]">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-12">
           <div className="h-1 w-12 bg-amber-600"></div>
