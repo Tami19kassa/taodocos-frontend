@@ -2,27 +2,29 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function PromotionCarousel({ promotions }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!promotions || promotions.length === 0) return null;
-
+  // --- FIX: Hooks must run BEFORE any return statement ---
   useEffect(() => {
-    if (promotions.length <= 1) return;
+    if (!promotions || promotions.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % promotions.length);
     }, 6000); 
     return () => clearInterval(timer);
-  }, [promotions.length]);
+  }, [promotions]); // Removed promotions.length to be safer
+
+  // --- CHECK DATA EXISTENCE HERE ---
+  if (!promotions || promotions.length === 0) return null;
 
   const currentPromo = promotions[currentIndex];
   
-  // FIX: Handle Banner URLs
-  const rawUrl = currentPromo.banner?.url;
+  // FIX: Handle Cloudinary/Local URLs safely
+  const rawUrl = currentPromo?.banner?.url;
   const imageUrl = rawUrl 
-    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`) 
     : null;
 
   if (!imageUrl) return null;
@@ -31,7 +33,7 @@ export default function PromotionCarousel({ promotions }) {
     <section className="py-16 px-4 max-w-7xl mx-auto">
       {/* Label */}
       <div className="flex items-center gap-2 mb-6 ml-2">
-        <Sparkles className="text-purple-500 w-4 h-4" />
+        <Sparkles className="text-cyan-500 w-4 h-4" />
         <span className="text-xs font-bold tracking-[0.2em] text-slate-400 uppercase">Featured Highlights</span>
       </div>
 
@@ -51,20 +53,16 @@ export default function PromotionCarousel({ promotions }) {
               transition={{ duration: 0.8 }}
               className="absolute inset-0"
             >
-              {/* Background Image */}
               <img 
                 src={imageUrl} 
                 alt={currentPromo.title} 
                 className="w-full h-full object-cover" 
               />
-              
-              {/* Dark Overlay for readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0B0C15] via-transparent to-transparent opacity-90" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C15]/80 to-transparent opacity-80" />
             </motion.div>
           </AnimatePresence>
 
-          {/* --- CONTENT BOX --- */}
           <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row justify-between items-end gap-6">
             <div className="max-w-2xl">
               <motion.h3 
@@ -76,11 +74,6 @@ export default function PromotionCarousel({ promotions }) {
               >
                 {currentPromo.title}
               </motion.h3>
-              
-              {/* Optional: Description if you add it to Strapi later */}
-              <p className="text-slate-300 text-sm md:text-base max-w-lg">
-                Don't miss out on this exclusive update. Dive deeper into the heritage.
-              </p>
             </div>
 
             {currentPromo.link && (
@@ -95,7 +88,6 @@ export default function PromotionCarousel({ promotions }) {
             )}
           </div>
 
-          {/* Indicators */}
           {promotions.length > 1 && (
             <div className="absolute top-6 right-6 flex gap-2">
               {promotions.map((_, idx) => (

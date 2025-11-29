@@ -13,13 +13,11 @@ export default function Library({ books }) {
            <p className="text-slate-400 text-sm">Downloadable manuscripts & guides</p>
          </div>
 
-         {/* GRID: Changed to show smaller items (2 per row on mobile, 4 on desktop) */}
          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
            {books.map((book) => {
              
-             // --- FIX 1: Robust Image Logic ---
-             // Checks for V5 (flat) or V4 (nested) structure
-             const imgData = book.cover || book.cover?.data?.attributes;
+             // --- FIX 1: USE 'cover_image' ---
+             const imgData = book.cover_image || book.cover || book.cover_image?.data?.attributes;
              const rawImgUrl = imgData?.url;
              
              const coverUrl = rawImgUrl 
@@ -48,7 +46,7 @@ export default function Library({ books }) {
                    }`}
                  onClick={(e) => !hasFile && e.preventDefault()} 
                >
-                 {/* --- IMAGE AREA (Aspect Ratio 3:4 for Book Shape) --- */}
+                 {/* IMAGE AREA */}
                  <div className="aspect-[3/4] w-full relative overflow-hidden bg-slate-900">
                    {coverUrl ? (
                      <img 
@@ -57,14 +55,12 @@ export default function Library({ books }) {
                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                      />
                    ) : (
-                     // Fallback Icon if no image
                      <div className="w-full h-full flex flex-col items-center justify-center p-4">
                        <FileText className="text-slate-600 w-10 h-10 mb-2" />
                        <span className="text-[10px] text-slate-600 uppercase tracking-widest text-center">No Cover</span>
                      </div>
                    )}
                    
-                   {/* Hover Overlay */}
                    {hasFile && (
                      <div className="absolute inset-0 bg-cyan-900/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                        <ArrowUpRight className="text-white w-8 h-8" />
@@ -72,7 +68,7 @@ export default function Library({ books }) {
                    )}
                  </div>
 
-                 {/* --- TITLE AREA (Smaller & cleaner) --- */}
+                 {/* TITLE AREA */}
                  <div className="p-4 flex-1 flex flex-col justify-between">
                    <h3 className="font-cinzel text-sm text-white mb-1 leading-snug group-hover:text-cyan-400 transition-colors line-clamp-2">
                      {book.title}
