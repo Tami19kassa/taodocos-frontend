@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, User, MessageCircle, Heart, Smile, MoreHorizontal, Reply } from 'lucide-react';
+import { Send, User, MessageCircle, Heart, Smile, MoreHorizontal, Reply, CornerDownRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -9,12 +9,13 @@ const EMOJIS = ['🔥', '❤️', '🙌', '🙏', '👏', '🤔', '😢', '😍'
 export default function CommentSection({ lessonId, jwt, user }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [replyContent, setReplyContent] = useState(''); // Separate state for replies
   const [loading, setLoading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   
-  // Local interaction state (Visual only)
+  // Local interaction state
   const [likedComments, setLikedComments] = useState(new Set());
-  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null); // ID of comment being replied to
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -31,11 +32,31 @@ export default function CommentSection({ lessonId, jwt, user }) {
     fetchComments();
   }, [lessonId, jwt]);
 
+  // --- MAIN COMMENT POST ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    setLoading(true);
+    await postComment(newComment);
+    setNewComment('');
+    setShowEmoji(false);
+  };
 
+  // --- REPLY POST ---
+  const handleReplySubmit = async (e, parentAuthor) => {
+    e.preventDefault();
+    if (!replyContent.trim()) return;
+    
+    // For now, we simulate threading by tagging the user
+    const content = `@${parentAuthor} ${replyContent}`;
+    await postComment(content);
+    
+    setReplyContent('');
+    setReplyingTo(null);
+  };
+
+  // --- SHARED POST LOGIC ---
+  const postComment = async (contentStr) => {
+    setLoading(true);
     try {
       const res = await fetch(`${STRAPI_URL}/api/comments`, {
         method: 'POST',
@@ -45,7 +66,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
         },
         body: JSON.stringify({
           data: {
-            content: newComment,
+            content: contentStr,
             lesson: lessonId,
             user: user.id
           }
@@ -54,39 +75,33 @@ export default function CommentSection({ lessonId, jwt, user }) {
       
       const saved = await res.json();
       
-      // Optimistic UI Update
+      // Optimistic Update
       const newEntry = {
         id: saved.data?.id || Date.now(),
         attributes: {
-          content: newComment,
+          content: contentStr,
           createdAt: new Date().toISOString(),
           user: { data: { attributes: { username: user.username } } }
         },
-        // Handle V5 Flat structure
-        content: newComment,
+        // V5 Flat Fallback
+        content: contentStr,
         user: { username: user.username },
         createdAt: new Date().toISOString()
       };
 
       setComments([newEntry, ...comments]);
-      setNewComment('');
-      setShowEmoji(false);
     } catch (err) {
       alert("Failed to post.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const toggleLike = (id) => {
     const newLikes = new Set(likedComments);
     if (newLikes.has(id)) newLikes.delete(id);
     else newLikes.add(id);
     setLikedComments(newLikes);
-  };
-
-  const addEmoji = (emoji) => {
-    setNewComment(prev => prev + emoji);
   };
 
   return (
@@ -101,7 +116,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
         </div>
       </div>
 
-      {/* --- INPUT AREA --- */}
+      {/* --- MAIN INPUT AREA --- */}
       <div className="flex gap-4 mb-12">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
           <span className="font-bold text-white text-sm">{user.username.charAt(0).toUpperCase()}</span>
@@ -116,7 +131,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
               className="w-full bg-[#0B0C15] border border-white/10 rounded-2xl p-4 text-slate-200 focus:border-cyan-500/50 focus:bg-[#11121f] focus:outline-none transition-all min-h-[100px] resize-none placeholder-slate-600 shadow-inner"
             />
             
-            {/* Toolbar */}
+            {/* Emoji Toolbar */}
             <div className="absolute bottom-3 left-3 flex gap-2">
               <div className="relative">
                 <button 
@@ -126,8 +141,6 @@ export default function CommentSection({ lessonId, jwt, user }) {
                 >
                   <Smile size={18} />
                 </button>
-                
-                {/* Emoji Popover */}
                 <AnimatePresence>
                   {showEmoji && (
                     <motion.div 
@@ -138,7 +151,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
                         <button 
                           key={emoji} 
                           type="button" 
-                          onClick={() => addEmoji(emoji)}
+                          onClick={() => setNewComment(prev => prev + emoji)}
                           className="hover:bg-white/10 p-1.5 rounded-lg transition-colors text-lg"
                         >
                           {emoji}
@@ -163,7 +176,6 @@ export default function CommentSection({ lessonId, jwt, user }) {
       {/* --- COMMENT LIST --- */}
       <div className="space-y-8">
         {comments.map((comment) => {
-          // Normalize Data (V4 vs V5)
           const content = comment.content || comment.attributes?.content;
           const author = comment.user?.username || comment.attributes?.user?.data?.attributes?.username || "Student";
           const rawDate = comment.createdAt || comment.attributes?.createdAt;
@@ -187,16 +199,13 @@ export default function CommentSection({ lessonId, jwt, user }) {
                     <span className="font-bold text-slate-200 text-sm">{author}</span>
                     <span className="text-[10px] text-slate-600">• {date}</span>
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-white transition-opacity">
-                    <MoreHorizontal size={14} />
-                  </button>
                 </div>
                 
                 <p className="text-slate-300 text-sm leading-relaxed mb-3 whitespace-pre-wrap">
                   {content}
                 </p>
 
-                {/* Actions */}
+                {/* Action Bar */}
                 <div className="flex items-center gap-6">
                   <button 
                     onClick={() => toggleLike(id)}
@@ -214,26 +223,43 @@ export default function CommentSection({ lessonId, jwt, user }) {
                   </button>
                 </div>
 
-                {/* Reply Input (Visual Only) */}
+                {/* --- REPLY INPUT AREA (Fixed UI) --- */}
                 <AnimatePresence>
                   {replyingTo === id && (
                     <motion.div 
-                      initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }} 
+                      animate={{ height: 'auto', opacity: 1 }} 
+                      exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 flex gap-3 pl-4 border-l-2 border-white/5">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 text-xs">
-                          {user.username.charAt(0)}
+                      <form 
+                        onSubmit={(e) => handleReplySubmit(e, author)}
+                        className="mt-4 flex gap-3 ml-2 pl-4 border-l-2 border-white/5"
+                      >
+                        {/* Reply Line */}
+                        <CornerDownRight className="text-white/20 -ml-6 mt-2 shrink-0" size={16} />
+                        
+                        <div className="w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center shrink-0 text-xs text-cyan-400 border border-cyan-500/20">
+                          {user.username.charAt(0).toUpperCase()}
                         </div>
+                        
                         <div className="flex-1 relative">
                           <input 
+                            autoFocus
                             type="text" 
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
                             placeholder={`Reply to ${author}...`}
-                            className="w-full bg-[#0B0C15] border border-white/10 rounded-lg py-2 px-3 text-sm text-white focus:border-cyan-500/50 outline-none"
+                            className="w-full bg-[#161726] border border-white/10 rounded-lg py-2 pl-4 pr-12 text-sm text-white focus:border-cyan-500/50 outline-none"
                           />
-                          <p className="text-[10px] text-slate-600 mt-1 italic">* Replies require database update to save.</p>
+                          <button 
+                            disabled={!replyContent.trim()}
+                            className="absolute right-2 top-1.5 bg-cyan-600 hover:bg-cyan-500 text-white p-1 rounded-md transition-colors disabled:opacity-0 disabled:pointer-events-none"
+                          >
+                            <ArrowUpRight size={14} /> {/* Send Icon */}
+                          </button>
                         </div>
-                      </div>
+                      </form>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -244,4 +270,25 @@ export default function CommentSection({ lessonId, jwt, user }) {
       </div>
     </div>
   );
+}
+
+// Icon helper
+function ArrowUpRight({ size, className }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M22 2L11 13" />
+      <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+    </svg>
+  )
 }
