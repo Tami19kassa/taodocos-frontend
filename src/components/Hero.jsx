@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 // FIX: Added fallback to localhost so it doesn't crash if env var is missing
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ;
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },

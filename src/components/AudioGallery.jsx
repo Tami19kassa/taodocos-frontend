@@ -1,7 +1,7 @@
 import { Play, Pause, Music } from 'lucide-react';
 import { useState, useRef } from 'react';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 
 export default function AudioGallery({ audios }) {
   const [playingId, setPlayingId] = useState(null);

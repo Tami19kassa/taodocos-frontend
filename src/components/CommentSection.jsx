@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Send, MessageCircle, Heart, Smile, Reply, CornerDownRight, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
 const EMOJIS = ['🔥', '❤️', '🙌', '🙏', '👏', '🤔', '😢', '😍'];
 
 export default function CommentSection({ lessonId, jwt, user }) {
