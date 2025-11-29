@@ -75,7 +75,7 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`),
         fetch(`${STRAPI_URL}/api/promotions?populate=*`),
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`),
-        fetch(`${STRAPI_URL}/api/global-setting?populate=*`),
+        fetch(`${STRAPI_URL}/api/footer?populate=*`),
         fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`)
       ]);
 
