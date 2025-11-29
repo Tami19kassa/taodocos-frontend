@@ -1,35 +1,44 @@
 @import "tailwindcss";
  
-
-
+ 
 :root {
-  /* THE ANCIENT PALETTE */
-  --bg-deep: #1a0f0a;   /* Deep Brown/Black */
-  --accent-gold: #d97706; /* Amber 600 */
-  --accent-light: #fbbf24; /* Amber 400 */
-  --glass-border: rgba(251, 191, 36, 0.1); /* Gold Tint */
+  /* Palette extracted from your image */
+  --bg-deep: #120a05;   /* Almost black brown */
+  --bg-panel: #1e100a;  /* Dark Wood */
+  --accent-gold: #ffd700; /* Bright Yellow/Gold */
+  --accent-amber: #d97706; /* Deep Amber */
+  --text-main: #f5f5dc; /* Beige/Parchment */
+  --text-muted: #a89f91; /* Stone */
 }
 
 body {
   background-color: var(--bg-deep);
-  color: #e7e5e4; /* Warm Stone White */
+  color: var(--text-main);
   min-height: 100vh;
-  /* Font setting */
+  /* A Vignette effect with warm undertones */
+  background-image: radial-gradient(circle at 50% 0%, #451a03 0%, #120a05 80%);
   font-family: var(--font-inter), sans-serif;
 }
 
-/* Glass Card - Updated for Warmth */
-.ancient-card {
-  background: rgba(20, 10, 5, 0.6); /* Dark Brown tint */
+/* ANCIENT GLASS CARD */
+.ancient-glass {
+  background: rgba(30, 16, 10, 0.7); /* Dark Brown Glass */
   backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 215, 0, 0.15); /* Gold Border */
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
 }
 
-/* Scrollbar - Gold */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #0c0a09; }
-::-webkit-scrollbar-thumb { background: #451a03; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #d97706; }
+/* GOLD GLOW INPUTS */
+.ancient-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  transition: all 0.3s ease;
+}
+.ancient-input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+  outline: none;
+}
 
 iframe { width: 100%; height: 100%; }

@@ -1,165 +1,194 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, Mail, Key, ArrowRight, Music } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Mail, Key, ArrowRight, Music, AlertCircle, CheckCircle } from 'lucide-react';
 
- 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  ;
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function AuthScreen({ onAuth, loading, authError, landing }) {
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [view, setView] = useState('login'); // 'login', 'register', 'forgot'
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [resetStatus, setResetStatus] = useState(null); // Success/Error message for reset
 
-  const welcomeTitle = landing?.hero_title || "Sanctuary Entrance";
-  const welcomeSubtitle = landing?.hero_subtitle || "Begin your journey into the sacred sounds.";
+  // Theme Data
+  const welcomeTitle = landing?.hero_title || "Taodocos Begena";
+  const welcomeSubtitle = landing?.hero_subtitle || "Master the spiritual sounds of the Harp of David.";
   
-  // FIX: Check if URL is absolute (Cloudinary) or relative (Local)
+  // Background Logic
   const rawUrl = landing?.hero_background?.url;
   const bgImage = rawUrl 
-    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
+    ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`) 
     : null;
+
+  // --- HANDLERS ---
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = isRegistering 
-      ? formData 
-      : { identifier: formData.email, password: formData.password };
-    onAuth(payload, isRegistering);
+    if (view === 'forgot') {
+      handleForgotPassword();
+    } else {
+      const payload = view === 'register' 
+        ? formData 
+        : { identifier: formData.email, password: formData.password };
+      onAuth(payload, view === 'register');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setResetStatus({ type: 'loading', msg: 'Sending...' });
+    try {
+      const res = await fetch(`${STRAPI_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      
+      if (data.error) throw new Error(data.error.message);
+      
+      setResetStatus({ type: 'success', msg: 'Reset link sent! Check your email.' });
+    } catch (err) {
+      setResetStatus({ type: 'error', msg: err.message || 'Failed to send email.' });
+    }
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center relative overflow-hidden font-sans bg-[#0B0C15]">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans bg-[#120a05]">
       
-      {/* --- BACKGROUND IMAGE (Fixed Fit) --- */}
+      {/* --- BACKGROUND --- */}
       <div className="absolute inset-0 z-0">
         {bgImage ? (
-          <img 
-            src={bgImage} 
-            alt="Background" 
-            className="w-full h-full object-cover object-center opacity-50" // Slightly lower opacity for the dark tech vibe
-          />
+          <img src={bgImage} alt="Background" className="w-full h-full object-cover object-top opacity-40" />
         ) : (
-          <div className="w-full h-full bg-[#0B0C15]" />
+          <div className="w-full h-full bg-[#1a0f0a]" />
         )}
-        
-        {/* Cool Blue/Purple Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0C15] via-[#0B0C15]/80 to-cyan-900/20" />
+        {/* Warm/Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#120a05] via-[#120a05]/90 to-[#451a03]/30" />
       </div>
 
       {/* --- CONTENT --- */}
       <div className="relative z-10 w-full max-w-7xl px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center h-full">
         
-        {/* Left Side: Welcome Text */}
-        <div className="hidden lg:block pr-12">
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ duration: 0.8 }}
-          >
-            {/* Icon Glow */}
-            <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center mb-8 backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.3)]">
-              <Music className="text-cyan-400 w-8 h-8" />
+        {/* Left Side: Text */}
+        <div className="hidden lg:block pr-12 pt-10">
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+            <div className="w-20 h-20 rounded-full bg-amber-900/40 border border-amber-500/50 flex items-center justify-center mb-8 backdrop-blur-md shadow-[0_0_30px_rgba(217,119,6,0.2)]">
+              <Music className="text-amber-500 w-10 h-10" />
             </div>
-            
-            <h1 className="font-cinzel text-5xl md:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-2xl">
+            <h1 className="font-cinzel text-6xl md:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-xl">
               {welcomeTitle}
             </h1>
-            
-            <div className="border-l-4 border-cyan-500 pl-6">
-              <p className="text-slate-300 text-xl leading-relaxed font-light">
-                {welcomeSubtitle}
+            <div className="border-l-4 border-amber-600 pl-6">
+              <p className="text-[#e7e5e4] text-xl leading-relaxed font-light font-serif italic">
+                "{welcomeSubtitle}"
               </p>
             </div>
           </motion.div>
         </div>
 
-        {/* Right Side: Login Form */}
+        {/* Right Side: The Card */}
         <div className="flex justify-center lg:justify-end">
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full max-w-[450px] bg-[#0B0C15]/60 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl shadow-2xl relative"
+            initial={{ opacity: 0, y: 30 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="w-full max-w-[450px] ancient-glass p-8 md:p-12 rounded-2xl relative"
           >
             <div className="text-center mb-8">
               <h2 className="font-cinzel text-3xl text-white">
-                {isRegistering ? 'Create Account' : 'Sign In'}
+                {view === 'register' ? 'New Student' : view === 'forgot' ? 'Reset Password' : 'Sign In'}
               </h2>
-              <p className="text-slate-400 text-sm mt-2">
-                {isRegistering ? "Join the future today" : "Welcome back"}
+              <p className="text-stone-400 text-sm mt-2">
+                {view === 'register' ? "Begin your spiritual journey" : view === 'forgot' ? "We will send a link to your email" : "Welcome back to the sanctuary"}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {isRegistering && (
-                <div className="group">
-                  <label className="text-xs text-cyan-400 font-bold uppercase tracking-wider ml-1">Username</label>
-                  <div className="relative mt-1">
-                    <User className="absolute left-4 top-3.5 text-slate-500 w-5 h-5" />
-                    <input 
-                      type="text" 
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none transition-all placeholder-slate-600"
-                      placeholder="Username"
-                      value={formData.username} 
-                      onChange={e => setFormData({...formData, username: e.target.value})} 
-                      required 
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="group">
-                <label className="text-xs text-cyan-400 font-bold uppercase tracking-wider ml-1">Email</label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-4 top-3.5 text-slate-500 w-5 h-5" />
+              
+              {view === 'register' && (
+                <div className="relative">
+                  <User className="absolute left-4 top-3.5 text-stone-500 w-5 h-5" />
                   <input 
-                    type="email" 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none transition-all placeholder-slate-600"
-                    placeholder="name@email.com"
-                    value={formData.email} 
-                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                    type="text" 
+                    className="ancient-input w-full rounded-lg py-3 pl-12 pr-4"
+                    placeholder="Username"
+                    value={formData.username} 
+                    onChange={e => setFormData({...formData, username: e.target.value})} 
                     required 
                   />
                 </div>
+              )}
+
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 text-stone-500 w-5 h-5" />
+                <input 
+                  type="email" 
+                  className="ancient-input w-full rounded-lg py-3 pl-12 pr-4"
+                  placeholder="Email Address"
+                  value={formData.email} 
+                  onChange={e => setFormData({...formData, email: e.target.value})} 
+                  required 
+                />
               </div>
 
-              <div className="group">
-                <label className="text-xs text-cyan-400 font-bold uppercase tracking-wider ml-1">Password</label>
-                <div className="relative mt-1">
-                  <Key className="absolute left-4 top-3.5 text-slate-500 w-5 h-5" />
+              {view !== 'forgot' && (
+                <div className="relative">
+                  <Key className="absolute left-4 top-3.5 text-stone-500 w-5 h-5" />
                   <input 
                     type="password" 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none transition-all placeholder-slate-600"
-                    placeholder="••••••••"
+                    className="ancient-input w-full rounded-lg py-3 pl-12 pr-4"
+                    placeholder="Password"
                     value={formData.password} 
                     onChange={e => setFormData({...formData, password: e.target.value})} 
                     required 
                   />
+                  {view === 'login' && (
+                    <button 
+                      type="button"
+                      onClick={() => setView('forgot')}
+                      className="absolute right-4 top-4 text-[10px] text-amber-500 hover:text-amber-400 uppercase tracking-wider font-bold"
+                    >
+                      Forgot?
+                    </button>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {authError && (
-                <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-xs text-center">
-                  {authError}
+              {/* Error / Status Messages */}
+              {authError && view !== 'forgot' && (
+                <div className="p-3 rounded bg-red-900/20 border border-red-900/50 text-red-200 text-xs text-center flex items-center justify-center gap-2">
+                  <AlertCircle size={14} /> {authError}
+                </div>
+              )}
+
+              {resetStatus && view === 'forgot' && (
+                <div className={`p-3 rounded border text-xs text-center flex items-center justify-center gap-2 ${resetStatus.type === 'success' ? 'bg-green-900/20 border-green-800 text-green-200' : 'bg-red-900/20 border-red-900 text-red-200'}`}>
+                  {resetStatus.type === 'success' ? <CheckCircle size={14}/> : <AlertCircle size={14}/>} 
+                  {resetStatus.msg}
                 </div>
               )}
 
               <button 
-                disabled={loading} 
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 mt-6"
+                disabled={loading || (view === 'forgot' && resetStatus?.type === 'loading')} 
+                className="w-full bg-amber-700 hover:bg-amber-600 text-white font-bold py-3.5 rounded-lg transition-all shadow-[0_0_20px_rgba(217,119,6,0.3)] flex items-center justify-center gap-2 mt-6 uppercase tracking-widest text-xs"
               >
-                {loading ? 'Processing...' : (isRegistering ? 'Register' : 'Enter Sanctuary')}
-                {!loading && <ArrowRight size={18} />}
+                {loading ? 'Processing...' : view === 'register' ? 'Start Journey' : view === 'forgot' ? 'Send Reset Link' : 'Enter Sanctuary'}
+                {!loading && <ArrowRight size={16} />}
               </button>
             </form>
 
-            <div className="mt-8 text-center">
-              <button 
-                onClick={() => { setIsRegistering(!isRegistering); setFormData({username:'', email:'', password:''}); }} 
-                className="text-slate-400 hover:text-white text-sm transition-colors underline decoration-cyan-500/30 underline-offset-4"
-              >
-                {isRegistering ? "Already have an account? Sign In" : "Don't have an account? Register"}
-              </button>
+            {/* Navigation between modes */}
+            <div className="mt-8 text-center space-y-2">
+              {view !== 'login' && (
+                <button onClick={() => { setView('login'); setResetStatus(null); }} className="block w-full text-stone-400 hover:text-white text-xs transition-colors">
+                  Back to Sign In
+                </button>
+              )}
+              {view === 'login' && (
+                <button onClick={() => setView('register')} className="block w-full text-amber-500 hover:text-amber-400 text-xs font-bold uppercase tracking-wider transition-colors">
+                  Create New Account
+                </button>
+              )}
             </div>
+
           </motion.div>
         </div>
       </div>
