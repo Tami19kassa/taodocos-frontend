@@ -34,7 +34,9 @@ export default function LevelGrid({ levels, isUnlocked, onLevelClick }) {
               viewport={{ once: true }}
               whileHover={{ y: -10 }}
               onClick={() => onLevelClick(level)} 
-              className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 group flex flex-col h-full ancient-card ${
+              // HARDCODED BACKGROUND STYLES HERE TO FIX THE ISSUE
+              className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 group flex flex-col h-full 
+                bg-[#1e100a]/80 backdrop-blur-md border ${
                 isHighlight 
                   ? 'border-amber-500/40 shadow-2xl shadow-amber-900/20 scale-100 md:scale-105 z-10' 
                   : 'border-white/5 hover:border-amber-500/30'
