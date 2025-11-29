@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-// --- COMPONENT IMPORTS ---
+// Components
 import LoadingScreen from '@/components/LoadingScreen';
 import AuthScreen from '@/components/AuthScreen';
 import Navbar from '@/components/Navbar';
@@ -10,48 +10,35 @@ import Hero from '@/components/Hero';
 import PromotionCarousel from '@/components/PromotionCarousel';
 import LevelGrid from '@/components/LevelGrid';
 import Library from '@/components/Library';
-import AudioGallery from '@/components/AudioGallery'; // Ensure this exists
+import AudioGallery from '@/components/AudioGallery';
 import TeacherBio from '@/components/TeacherBio';
 import Player from '@/components/Player';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 
-// --- CONFIGURATION (With Safety Fallback) ---
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL  
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function Home() {
-  // -- STATE --
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('home'); 
   
-  // Data State
   const [data, setData] = useState({ 
-    levels: [], 
-    books: [], 
-    teacher: null, 
-    landing: null,
-    promotions: [],
-    testimonials: [],
-    audios: [],
-    settings: null,
+    levels: [], books: [], teacher: null, landing: null, 
+    promotions: [], testimonials: [], audios: [], settings: null,
     userOwnedLevels: [] 
   });
   
-  // Navigation & Playback State
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  
-  // Auth State
   const [authError, setAuthError] = useState('');
 
-  // --- INITIALIZATION ---
+  // 1. INITIALIZATION
   useEffect(() => {
     fetchPublicData();
-
     const storedToken = localStorage.getItem('strapi_jwt');
     const storedUser = localStorage.getItem('strapi_user');
 
@@ -65,60 +52,53 @@ export default function Home() {
     }
   }, []);
 
-  // --- API ACTIONS ---
+  // 2. DATA FETCHING
   const fetchPublicData = async () => {
     try {
-      const [lRes, bRes, tRes, landingRes, promoRes, testRes, footerRes, audioRes] = await Promise.all([
-        fetch(`${STRAPI_URL}/api/levels?populate=*`), 
-        fetch(`${STRAPI_URL}/api/books?populate=*`),
-        fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`),
-        fetch(`${STRAPI_URL}/api/landing-page?populate=*`),
-        fetch(`${STRAPI_URL}/api/promotions?populate=*`),
-        fetch(`${STRAPI_URL}/api/testimonials?populate=*`),
-        fetch(`${STRAPI_URL}/api/footer?populate=*`),
-        fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`)
+      // We use Promise.allSettled to prevent one 404 from crashing everything
+      const results = await Promise.allSettled([
+        fetch(`${STRAPI_URL}/api/levels?populate=*`).then(r=>r.json()), 
+        fetch(`${STRAPI_URL}/api/books?populate=*`).then(r=>r.json()),
+        fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`).then(r=>r.json()),
+        fetch(`${STRAPI_URL}/api/landing-page?populate=*`).then(r=>r.json()),
+        fetch(`${STRAPI_URL}/api/promotions?populate=*`).then(r=>r.json()),
+        fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
+        fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()), // Try 'footer'
+        fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`).then(r=>r.json())
       ]);
 
-      const [l, b, t, landing, promos, tests, footer, audios] = await Promise.all([
-        lRes.json(), bRes.json(), tRes.json(), landingRes.json(), promoRes.json(), testRes.json(), footerRes.json(), audioRes.json()
-      ]);
-
+      // Extract data safely
+      const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
+      
       setData(prev => ({
         ...prev,
-        levels: l.data || [],
-        books: b.data || [],
-        teacher: t.data || null,
-        landing: landing.data || null,
-        promotions: promos.data || [],
-        testimonials: tests.data || [],
-        settings: footer.data || null,
-        audios: audios.data || []
+        levels: getVal(results[0]) || [],
+        books: getVal(results[1]) || [],
+        teacher: getVal(results[2]) || null,
+        landing: getVal(results[3]) || null,
+        promotions: getVal(results[4]) || [],
+        testimonials: getVal(results[5]) || [],
+        settings: getVal(results[6]) || null,
+        audios: getVal(results[7]) || []
       }));
     } catch (e) {
-      console.error("Public Fetch Error:", e);
+      console.error("Fetch Error:", e);
     }
   };
 
   const fetchUserData = async (token, userId) => {
     try {
       setLoading(true);
-      const userRes = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels`, {
+      const res = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const u = await userRes.json();
-
-      setData(prev => ({
-        ...prev,
-        userOwnedLevels: u.owned_levels || [] 
-      }));
+      const u = await res.json();
+      setData(prev => ({ ...prev, userOwnedLevels: u.owned_levels || [] }));
       setLoading(false);
-    } catch (e) {
-      console.error("User Fetch Error:", e);
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); setLoading(false); }
   };
- 
-  // --- AUTH HANDLERS ---
+
+  // 3. LOGIC
   const handleAuth = async (formData, isRegistering) => {
     setAuthError('');
     setLoading(true);
@@ -142,7 +122,7 @@ export default function Home() {
         fetchUserData(result.jwt, result.user.id);
       }
     } catch (error) {
-      setAuthError("Connection failed. Is Strapi running?");
+      setAuthError("Connection failed.");
       setLoading(false);
     }
   };
@@ -154,7 +134,6 @@ export default function Home() {
     setView('home');
   };
 
-  // --- ACCESS LOGIC ---
   const isUnlocked = (level) => {
     if (!data.userOwnedLevels) return false;
     return data.userOwnedLevels.some(owned => owned.id === level.id || owned.documentId === level.documentId);
@@ -162,94 +141,70 @@ export default function Home() {
 
   const handleLevelClick = async (level) => {
     try {
-      // 1. Fetch Lessons (Sorted)
       const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc`, {
           headers: { Authorization: `Bearer ${jwt}` }
       });
       const json = await res.json();
       const lessons = json.data;
 
-      // 2. Logic to pick first playable video
+      if (!lessons || lessons.length === 0) {
+        alert("No lessons uploaded for this level yet.");
+        return;
+      }
+
       const unlocked = isUnlocked(level);
       let initialLesson = lessons[0];
       
+      // If locked, try to find a free sample
       if (!unlocked) {
         const firstFree = lessons.find(l => l.is_free_sample);
         if (firstFree) initialLesson = firstFree;
       }
 
-      // 3. Set State
-      setSelectedLevel({ ...level, lessons: lessons }); // Save sorted lessons
-      
-      if (lessons && lessons.length > 0) {
-          setCurrentLesson(initialLesson);
-          setView('player');
-      } else {
-          alert("No lessons found.");
-      }
+      setSelectedLevel({ ...level, lessons: lessons });
+      setCurrentLesson(initialLesson);
+      setView('player');
+
     } catch (err) {
-      console.error(err);
+      console.error("Level Click Error:", err);
     }
   };
 
-  // --- RENDER ---
+  // 4. RENDER
   if (loading && !data.landing) return <LoadingScreen />;
   if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} />;
 
- // ... (inside Home function, before return)
-
-  // --- GLOBAL BACKGROUND LOGIC ---
-  const rawBgUrl = data.landing?.hero_background?.url;
-  const globalBgUrl = rawBgUrl 
-    ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
-    : null;
-
-  // ... (auth checks)
-
   return (
-    <main className="min-h-screen relative">
-      
-      {/* --- GLOBAL WALLPAPER (Fixed Background) --- */}
-      <div className="fixed inset-0 z-[-1]">
-        {globalBgUrl ? (
-          <img 
-            src={globalBgUrl} 
-            className="w-full h-full object-cover opacity-20" // Low opacity so text is readable
-            alt="Global Background"
-          />
-        ) : (
-          <div className="w-full h-full bg-[#0B0C15]" />
-        )}
-        
-        {/* Gradient Overlay (Blue/Purple Tint) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0B0C15]/90 via-[#0B0C15]/80 to-[#0B0C15]/95" />
-      </div>
-
+    <main className="min-h-screen bg-[#0B0C15] flex flex-col">
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
       
-      <div className="flex-grow relative z-10">
+      <div className="flex-grow">
         {view === 'home' ? (
           <>
-            {/* ... sections ... */}
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            
-            {/* Added Audio Gallery */}
             <AudioGallery audios={data.audios} />
-            
             <Library books={data.books} />
             <Testimonials testimonials={data.testimonials} />
             <TeacherBio teacher={data.teacher} />
           </>
         ) : (
           <Player 
-             // ... props
+            currentLesson={currentLesson} 
+            selectedLevel={selectedLevel} 
+            setCurrentLesson={setCurrentLesson} 
+            onExit={() => setView('home')}
+            isLevelUnlocked={isUnlocked(selectedLevel)}
+            jwt={jwt} 
+            user={user} 
+            onUnlockRequest={() => setModalOpen(true)}
           />
         )}
       </div>
 
       <Footer settings={data.settings} />
+
       <PaymentModal 
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
