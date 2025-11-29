@@ -44,7 +44,7 @@ export default function LevelGrid({ levels, isUnlocked, onLevelClick }) {
                 <h3 className="text-2xl font-bold text-white mb-2">{level.name}</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold text-white">{level.price}</span>
-                  <span className="text-sm text-slate-400">ETB / lifetime</span>
+                  <span className="text-sm text-slate-400">$ / lifetime</span>
                 </div>
                 
                 {unlocked ? (

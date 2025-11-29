@@ -166,32 +166,36 @@ const fetchPublicData = async () => {
   };
 
   const handleLevelClick = async (level) => {
-    if (isUnlocked(level)) {
-      try {
-        // Fetch Lessons
-        const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc`, {
-           headers: { Authorization: `Bearer ${jwt}` }
-        });
-        const json = await res.json();
-        const lessons = json.data;
-        
-        setSelectedLevel({ ...level, lessons: lessons });
+    // 1. Fetch Lessons regardless of lock status
+    try {
+      const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc`, {
+          headers: { Authorization: `Bearer ${jwt}` }
+      });
+      const json = await res.json();
+      const lessons = json.data;
 
-        if (lessons && lessons.length > 0) {
-           setCurrentLesson(lessons[0]); // Auto-Play first lesson
-           setView('player');
-        } else {
-           alert("No lessons uploaded for this level yet.");
-        }
-      } catch (err) {
-        console.error("Error loading lessons", err);
+      // 2. Determine Initial Lesson
+      // If locked, find the first FREE sample. If none, select first lesson (it will show locked UI).
+      const unlocked = isUnlocked(level);
+      let initialLesson = lessons[0];
+      
+      if (!unlocked) {
+        const firstFree = lessons.find(l => l.is_free_sample);
+        if (firstFree) initialLesson = firstFree;
       }
-    } else {
+
+      // 3. Set State
       setSelectedLevel(level);
-      setModalOpen(true);
+      if (lessons && lessons.length > 0) {
+          setCurrentLesson(initialLesson);
+          setView('player');
+      } else {
+          alert("No lessons found.");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
-
   // --- RENDER ---
 
   // 1. Loading State (Only if critical data is missing)
@@ -218,14 +222,19 @@ const fetchPublicData = async () => {
             <Testimonials testimonials={data.testimonials} />
             <TeacherBio teacher={data.teacher} />
           </>
-        ) : (
-          <Player 
-            currentLesson={currentLesson} 
-            selectedLevel={selectedLevel} 
-            setCurrentLesson={setCurrentLesson} 
-            onExit={() => setView('home')}
-          />
-        )}
+        ) : // ... inside return ...
+        (
+        <Player 
+          currentLesson={currentLesson} 
+          selectedLevel={selectedLevel} 
+          setCurrentLesson={setCurrentLesson} 
+          onExit={() => setView('home')}
+          isLevelUnlocked={isUnlocked(selectedLevel)} // Pass status
+          jwt={jwt} // Pass JWT for comments
+          user={user} // Pass User for comments
+          onUnlockRequest={() => setModalOpen(true)} // Allow modal open from player
+        />
+      )}
       </div>
 
       {/* Footer is always visible at bottom */}
