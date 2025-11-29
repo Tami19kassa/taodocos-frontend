@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, User, MessageCircle, Heart, Smile, MoreHorizontal, Reply, CornerDownRight } from 'lucide-react';
+import { Send, User, MessageCircle, Heart, Smile, MoreHorizontal, Reply, CornerDownRight, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -9,15 +9,17 @@ const EMOJIS = ['🔥', '❤️', '🙌', '🙏', '👏', '🤔', '😢', '😍'
 export default function CommentSection({ lessonId, jwt, user }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-  const [replyContent, setReplyContent] = useState(''); // Separate state for replies
+  const [replyContent, setReplyContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   
-  // Local interaction state
+  // Interaction State
   const [likedComments, setLikedComments] = useState(new Set());
-  const [replyingTo, setReplyingTo] = useState(null); // ID of comment being replied to
+  const [replyingTo, setReplyingTo] = useState(null);
 
+  // 1. LOAD DATA & SAVED LIKES
   useEffect(() => {
+    // Load Comments
     const fetchComments = async () => {
       try {
         const res = await fetch(`${STRAPI_URL}/api/comments?filters[lesson][id][$eq]=${lessonId}&populate=user&sort=createdAt:desc`, {
@@ -29,33 +31,18 @@ export default function CommentSection({ lessonId, jwt, user }) {
         console.error(err);
       }
     };
+
+    // Load Saved Likes from Local Storage
+    const savedLikes = localStorage.getItem(`likes_${lessonId}`);
+    if (savedLikes) {
+      setLikedComments(new Set(JSON.parse(savedLikes)));
+    }
+
     fetchComments();
   }, [lessonId, jwt]);
 
-  // --- MAIN COMMENT POST ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    await postComment(newComment);
-    setNewComment('');
-    setShowEmoji(false);
-  };
-
-  // --- REPLY POST ---
-  const handleReplySubmit = async (e, parentAuthor) => {
-    e.preventDefault();
-    if (!replyContent.trim()) return;
-    
-    // For now, we simulate threading by tagging the user
-    const content = `@${parentAuthor} ${replyContent}`;
-    await postComment(content);
-    
-    setReplyContent('');
-    setReplyingTo(null);
-  };
-
-  // --- SHARED POST LOGIC ---
-  const postComment = async (contentStr) => {
+  // 2. HANDLE POSTING (Shared Logic)
+  const postToStrapi = async (contentStr) => {
     setLoading(true);
     try {
       const res = await fetch(`${STRAPI_URL}/api/comments`, {
@@ -75,7 +62,7 @@ export default function CommentSection({ lessonId, jwt, user }) {
       
       const saved = await res.json();
       
-      // Optimistic Update
+      // Create new entry for UI
       const newEntry = {
         id: saved.data?.id || Date.now(),
         attributes: {
@@ -83,25 +70,55 @@ export default function CommentSection({ lessonId, jwt, user }) {
           createdAt: new Date().toISOString(),
           user: { data: { attributes: { username: user.username } } }
         },
-        // V5 Flat Fallback
+        // Fallback for V5 structure
         content: contentStr,
         user: { username: user.username },
         createdAt: new Date().toISOString()
       };
 
-      setComments([newEntry, ...comments]);
+      setComments([newEntry, ...comments]); // Add to top of list
+      return true;
     } catch (err) {
-      alert("Failed to post.");
+      console.error(err);
+      return false;
     } finally {
       setLoading(false);
     }
   }
 
+  // 3. HANDLERS
+  const handleMainSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    const success = await postToStrapi(newComment);
+    if (success) {
+      setNewComment('');
+      setShowEmoji(false);
+    }
+  };
+
+  const handleReplySubmit = async (e, parentAuthor) => {
+    e.preventDefault();
+    if (!replyContent.trim()) return;
+    
+    // Format reply: "@Username message"
+    const text = `@${parentAuthor} ${replyContent}`;
+    const success = await postToStrapi(text);
+    
+    if (success) {
+      setReplyContent('');
+      setReplyingTo(null); // Close reply box
+    }
+  };
+
   const toggleLike = (id) => {
     const newLikes = new Set(likedComments);
     if (newLikes.has(id)) newLikes.delete(id);
     else newLikes.add(id);
+    
     setLikedComments(newLikes);
+    // Save to Browser Storage so it remembers on reload
+    localStorage.setItem(`likes_${lessonId}`, JSON.stringify([...newLikes]));
   };
 
   return (
@@ -116,14 +133,14 @@ export default function CommentSection({ lessonId, jwt, user }) {
         </div>
       </div>
 
-      {/* --- MAIN INPUT AREA --- */}
+      {/* --- MAIN INPUT --- */}
       <div className="flex gap-4 mb-12">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg border border-white/10">
           <span className="font-bold text-white text-sm">{user.username.charAt(0).toUpperCase()}</span>
         </div>
         
         <div className="flex-1">
-          <form onSubmit={handleSubmit} className="relative group">
+          <form onSubmit={handleMainSubmit} className="relative group">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -194,19 +211,17 @@ export default function CommentSection({ lessonId, jwt, user }) {
               </div>
               
               <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-200 text-sm">{author}</span>
-                    <span className="text-[10px] text-slate-600">• {date}</span>
-                  </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-slate-200 text-sm">{author}</span>
+                  <span className="text-[10px] text-slate-600">• {date}</span>
                 </div>
                 
                 <p className="text-slate-300 text-sm leading-relaxed mb-3 whitespace-pre-wrap">
                   {content}
                 </p>
 
-                {/* Action Bar */}
-                <div className="flex items-center gap-6">
+                {/* Actions */}
+                <div className="flex items-center gap-6 mb-2">
                   <button 
                     onClick={() => toggleLike(id)}
                     className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${isLiked ? 'text-pink-500' : 'text-slate-500 hover:text-pink-400'}`}
@@ -216,14 +231,17 @@ export default function CommentSection({ lessonId, jwt, user }) {
                   </button>
                   
                   <button 
-                    onClick={() => setReplyingTo(replyingTo === id ? null : id)}
+                    onClick={() => {
+                        setReplyingTo(replyingTo === id ? null : id);
+                        setReplyContent(''); // Clear prev reply
+                    }}
                     className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-cyan-400 transition-colors"
                   >
                     <Reply size={14} /> Reply
                   </button>
                 </div>
 
-                {/* --- REPLY INPUT AREA (Fixed UI) --- */}
+                {/* --- REPLY INPUT (Accordion) --- */}
                 <AnimatePresence>
                   {replyingTo === id && (
                     <motion.div 
@@ -234,14 +252,9 @@ export default function CommentSection({ lessonId, jwt, user }) {
                     >
                       <form 
                         onSubmit={(e) => handleReplySubmit(e, author)}
-                        className="mt-4 flex gap-3 ml-2 pl-4 border-l-2 border-white/5"
+                        className="flex gap-3 ml-2 pt-2"
                       >
-                        {/* Reply Line */}
-                        <CornerDownRight className="text-white/20 -ml-6 mt-2 shrink-0" size={16} />
-                        
-                        <div className="w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center shrink-0 text-xs text-cyan-400 border border-cyan-500/20">
-                          {user.username.charAt(0).toUpperCase()}
-                        </div>
+                        <CornerDownRight className="text-white/20 mt-3 shrink-0" size={16} />
                         
                         <div className="flex-1 relative">
                           <input 
@@ -249,14 +262,14 @@ export default function CommentSection({ lessonId, jwt, user }) {
                             type="text" 
                             value={replyContent}
                             onChange={(e) => setReplyContent(e.target.value)}
-                            placeholder={`Reply to ${author}...`}
-                            className="w-full bg-[#161726] border border-white/10 rounded-lg py-2 pl-4 pr-12 text-sm text-white focus:border-cyan-500/50 outline-none"
+                            placeholder={`Replying to ${author}...`}
+                            className="w-full bg-[#161726] border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white focus:border-cyan-500/50 outline-none"
                           />
                           <button 
                             disabled={!replyContent.trim()}
-                            className="absolute right-2 top-1.5 bg-cyan-600 hover:bg-cyan-500 text-white p-1 rounded-md transition-colors disabled:opacity-0 disabled:pointer-events-none"
+                            className="absolute right-2 top-2 bg-cyan-600 hover:bg-cyan-500 text-white p-1.5 rounded-lg transition-colors disabled:opacity-0"
                           >
-                            <ArrowUpRight size={14} /> {/* Send Icon */}
+                            <ArrowUpRight size={16} />
                           </button>
                         </div>
                       </form>
@@ -270,25 +283,4 @@ export default function CommentSection({ lessonId, jwt, user }) {
       </div>
     </div>
   );
-}
-
-// Icon helper
-function ArrowUpRight({ size, className }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M22 2L11 13" />
-      <path d="M22 2l-7 20-4-9-9-4 20-7z" />
-    </svg>
-  )
 }
