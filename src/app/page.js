@@ -170,8 +170,11 @@ export default function Home() {
 
   // --- UPDATED BACKGROUND LOGIC ---
   // Now looks at data.theme instead of data.landing
-  const rawBgUrl = data.theme?.global_background?.url || data.theme?.attributes?.global_background?.data?.attributes?.url;
-  
+
+   
+
+  const rawBgUrl = data.theme?.global_background?.url || data.theme?.attributes?.hero_global_background?.data?.attributes?.url;
+  console.log("Global Background URL:", rawBgUrl);
   const globalBgUrl = rawBgUrl 
     ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
     : null;
