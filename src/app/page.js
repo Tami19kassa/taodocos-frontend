@@ -28,6 +28,7 @@ export default function Home() {
   const [data, setData] = useState({ 
     levels: [], books: [], teacher: null, landing: null, 
     promotions: [], testimonials: [], audios: [], settings: null,
+    theme: null, // <--- NEW: Holds the Site Theme data
     userOwnedLevels: [] 
   });
   
@@ -61,7 +62,9 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/promotions?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
-        fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`).then(r=>r.json())
+        fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`).then(r=>r.json()),
+        // --- NEW FETCH FOR BACKGROUND ---
+        fetch(`${STRAPI_URL}/api/site-theme?populate=*`).then(r=>r.json())
       ]);
 
       const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
@@ -75,7 +78,8 @@ export default function Home() {
         promotions: getVal(results[4]) || [],
         testimonials: getVal(results[5]) || [],
         settings: getVal(results[6]) || null,
-        audios: getVal(results[7]) || []
+        audios: getVal(results[7]) || [],
+        theme: getVal(results[8]) || null // <--- Store it
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -164,31 +168,33 @@ export default function Home() {
     }
   };
 
-  // --- GLOBAL BACKGROUND URL ---
-  const rawBgUrl = data.landing?.hero_background?.url;
+  // --- UPDATED BACKGROUND LOGIC ---
+  // Now looks at data.theme instead of data.landing
+  const rawBgUrl = data.theme?.global_background?.url || data.theme?.attributes?.global_background?.data?.attributes?.url;
+  
   const globalBgUrl = rawBgUrl 
     ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
     : null;
 
   if (loading && !data.landing) return <LoadingScreen />;
-  if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} />;
+  if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} bgUrl={globalBgUrl} />;
 
   return (
     <main className="min-h-screen relative">
       
-      {/* --- THE GLOBAL BACKGROUND --- */}
+      {/* --- GLOBAL WALLPAPER --- */}
       <div className="fixed inset-0 z-[-1]">
         {globalBgUrl ? (
           <img 
             src={globalBgUrl} 
-            className="w-full h-full object-cover opacity-20" 
+            className="w-full h-full object-cover opacity-30" 
             alt="Global Background"
           />
         ) : (
           <div className="w-full h-full bg-[#1a0f0a]" />
         )}
-        {/* Amber/Gold Tint Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/90 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
 
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
@@ -196,6 +202,7 @@ export default function Home() {
       <div className="flex-grow relative z-10">
         {view === 'home' ? (
           <>
+            {/* Passed landing data for text, but background is now global */}
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
