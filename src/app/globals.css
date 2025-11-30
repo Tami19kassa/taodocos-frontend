@@ -1,44 +1,22 @@
 @import "tailwindcss";
  
- 
+
 :root {
-  /* Palette extracted from your image */
-  --bg-deep: #120a05;   /* Almost black brown */
-  --bg-panel: #1e100a;  /* Dark Wood */
-  --accent-gold: #ffd700; /* Bright Yellow/Gold */
-  --accent-amber: #d97706; /* Deep Amber */
-  --text-main: #f5f5dc; /* Beige/Parchment */
-  --text-muted: #a89f91; /* Stone */
+  --bg-deep: #0c0a09;   /* Deep Brown/Black */
+  --glass-border: rgba(251, 191, 36, 0.1); /* Gold Tint */
 }
 
 body {
   background-color: var(--bg-deep);
-  color: var(--text-main);
+  color: #e7e5e4; /* Warm Stone */
   min-height: 100vh;
-  /* A Vignette effect with warm undertones */
-  background-image: radial-gradient(circle at 50% 0%, #451a03 0%, #120a05 80%);
   font-family: var(--font-inter), sans-serif;
 }
 
-/* ANCIENT GLASS CARD */
-.ancient-glass {
-  background: rgba(30, 16, 10, 0.7); /* Dark Brown Glass */
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 215, 0, 0.15); /* Gold Border */
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
-}
-
-/* GOLD GLOW INPUTS */
-.ancient-input {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  transition: all 0.3s ease;
-}
-.ancient-input:focus {
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
-  outline: none;
-}
+/* Scrollbar - Gold */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1c1917; }
+::-webkit-scrollbar-thumb { background: #78350f; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #d97706; }
 
 iframe { width: 100%; height: 100%; }

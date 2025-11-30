@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-// Components
+// --- COMPONENT IMPORTS ---
 import LoadingScreen from '@/components/LoadingScreen';
 import AuthScreen from '@/components/AuthScreen';
 import Navbar from '@/components/Navbar';
@@ -36,7 +36,6 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // 1. INITIALIZATION
   useEffect(() => {
     fetchPublicData();
     const storedToken = localStorage.getItem('strapi_jwt');
@@ -52,10 +51,8 @@ export default function Home() {
     }
   }, []);
 
-  // 2. DATA FETCHING
   const fetchPublicData = async () => {
     try {
-      // We use Promise.allSettled to prevent one 404 from crashing everything
       const results = await Promise.allSettled([
         fetch(`${STRAPI_URL}/api/levels?populate=*`).then(r=>r.json()), 
         fetch(`${STRAPI_URL}/api/books?populate=*`).then(r=>r.json()),
@@ -63,11 +60,10 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/promotions?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
-        fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()), // Try 'footer'
+        fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/audio-tracks?populate=*`).then(r=>r.json())
       ]);
 
-      // Extract data safely
       const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
       
       setData(prev => ({
@@ -97,8 +93,7 @@ export default function Home() {
       setLoading(false);
     } catch (e) { console.error(e); setLoading(false); }
   };
-
-  // 3. LOGIC
+ 
   const handleAuth = async (formData, isRegistering) => {
     setAuthError('');
     setLoading(true);
@@ -155,7 +150,6 @@ export default function Home() {
       const unlocked = isUnlocked(level);
       let initialLesson = lessons[0];
       
-      // If locked, try to find a free sample
       if (!unlocked) {
         const firstFree = lessons.find(l => l.is_free_sample);
         if (firstFree) initialLesson = firstFree;
@@ -166,19 +160,40 @@ export default function Home() {
       setView('player');
 
     } catch (err) {
-      console.error("Level Click Error:", err);
+      console.error(err);
     }
   };
 
-  // 4. RENDER
+  // --- GLOBAL BACKGROUND URL ---
+  const rawBgUrl = data.landing?.hero_background?.url;
+  const globalBgUrl = rawBgUrl 
+    ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
+    : null;
+
   if (loading && !data.landing) return <LoadingScreen />;
   if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} />;
 
   return (
-    <main className="min-h-screen bg-[#0B0C15] flex flex-col">
+    <main className="min-h-screen relative">
+      
+      {/* --- THE GLOBAL BACKGROUND --- */}
+      <div className="fixed inset-0 z-[-1]">
+        {globalBgUrl ? (
+          <img 
+            src={globalBgUrl} 
+            className="w-full h-full object-cover opacity-20" 
+            alt="Global Background"
+          />
+        ) : (
+          <div className="w-full h-full bg-[#1a0f0a]" />
+        )}
+        {/* Amber/Gold Tint Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
+      </div>
+
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
       
-      <div className="flex-grow">
+      <div className="flex-grow relative z-10">
         {view === 'home' ? (
           <>
             <Hero landing={data.landing} />

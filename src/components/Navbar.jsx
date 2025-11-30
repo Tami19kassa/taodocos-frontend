@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { Music, LogOut } from 'lucide-react';
 
 export default function Navbar({ user, onLogout, setView }) {
-  
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -13,10 +12,10 @@ export default function Navbar({ user, onLogout, setView }) {
       initial={{ y: -100 }} animate={{ y: 0 }} 
       className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
     >
-      <div className="max-w-7xl mx-auto ancient-glass rounded-xl px-6 py-3 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto bg-black/60 backdrop-blur-xl border border-amber-500/20 rounded-2xl px-6 py-3 flex justify-between items-center shadow-2xl">
         
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
-          <div className="w-10 h-10 bg-amber-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform border border-amber-500/30">
+          <div className="w-10 h-10 bg-amber-700 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
             <Music className="text-white w-5 h-5" />
           </div>
           <div>
@@ -42,7 +41,7 @@ export default function Navbar({ user, onLogout, setView }) {
               <p className="text-xs text-white font-bold">{user?.username}</p>
               <p className="text-[10px] text-amber-500 uppercase tracking-wider">Student</p>
            </div>
-           <button onClick={onLogout} className="bg-black/40 hover:bg-red-900/30 text-stone-400 hover:text-red-400 p-2 rounded-lg transition-all">
+           <button onClick={onLogout} className="bg-white/5 hover:bg-red-900/30 text-stone-400 hover:text-red-400 p-2 rounded-lg transition-all">
               <LogOut size={18} />
            </button>
         </div>
