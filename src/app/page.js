@@ -53,7 +53,6 @@ export default function Home() {
     }
   }, []);
 
-  // 2. DATA FETCHING
   const fetchPublicData = async () => {
     try {
       const results = await Promise.allSettled([
@@ -65,12 +64,15 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
         
-        // Fetch Audio Folders + Tracks + Covers
-        fetch(`${STRAPI_URL}/api/audio-folders?populate[audio_tracks][populate]=*&populate[cover]=*`).then(r=>r.json())
+        // --- SIMPLIFIED QUERY ---
+        // Just populate everything ("*")
+        // If "audio_tracks" are related, Strapi usually sends them automatically or we need a simpler syntax
+        fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json())
       ]);
 
       const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
       
+      // ... (Rest of data mapping stays the same) ...
       setData(prev => ({
         ...prev,
         levels: getVal(results[0]) || [],
@@ -80,25 +82,12 @@ export default function Home() {
         promotions: getVal(results[4]) || [],
         testimonials: getVal(results[5]) || [],
         settings: getVal(results[6]) || null,
-        audios: getVal(results[7]) || [] // Contains Folders now
+        audios: getVal(results[7]) || []
       }));
     } catch (e) {
-      console.error("Fetch Error:", e);
+      console.error("Public Fetch Error:", e);
     }
   };
-
-  const fetchUserData = async (token, userId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const u = await res.json();
-      setData(prev => ({ ...prev, userOwnedLevels: u.owned_levels || [] }));
-      setLoading(false);
-    } catch (e) { console.error(e); setLoading(false); }
-  };
-
   // 3. LOGIC
   const handleAuth = async (formData, isRegistering) => {
     setAuthError('');
