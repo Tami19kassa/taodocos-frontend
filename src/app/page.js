@@ -16,6 +16,7 @@ import Player from '@/components/Player';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
+import StudentShowcase from '@/components/StudentShowcase'; // NEW IMPORT
 
 // --- CONFIGURATION ---
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -30,11 +31,12 @@ export default function Home() {
   // Data State
   const [data, setData] = useState({ 
     levels: [], books: [], teacher: null, landing: null, 
-    promotions: [], testimonials: [], audios: [], settings: null,
+    promotions: [], testimonials: [], audios: [], 
+    performances: [], // NEW: Stores student performances
+    settings: null,
     userOwnedLevels: [] 
   });
   
-  // Navigation & Playback State
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,9 +69,9 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/promotions?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
-        
-        // FETCH AUDIO FOLDERS ONLY (Simplified)
-        fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json())
+        fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json()),
+        // NEW FETCH
+        fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()) 
       ]);
 
       const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
@@ -83,7 +85,8 @@ export default function Home() {
         promotions: getVal(results[4]) || [],
         testimonials: getVal(results[5]) || [],
         settings: getVal(results[6]) || null,
-        audios: getVal(results[7]) || [] // Folders
+        audios: getVal(results[7]) || [],
+        performances: getVal(results[8]) || [] // Store it
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -151,7 +154,6 @@ export default function Home() {
       const json = await res.json();
       let lessons = json.data;
 
-      // Force sort just in case
       if (lessons && lessons.length > 0) {
         lessons = lessons.sort((a, b) => (a.order || 0) - (b.order || 0));
       }
@@ -178,20 +180,17 @@ export default function Home() {
     }
   };
 
-  // --- GLOBAL BACKGROUND URL ---
+  // --- RENDER ---
   const rawBgUrl = data.landing?.hero_background?.url;
   const globalBgUrl = rawBgUrl 
     ? (rawBgUrl.startsWith('http') ? rawBgUrl : `${STRAPI_URL}${rawBgUrl}`)
     : null;
 
-  // 4. RENDER
   if (loading && !data.landing) return <LoadingScreen />;
   if (!user) return <AuthScreen onAuth={handleAuth} loading={loading} authError={authError} landing={data.landing} />;
 
   return (
     <main className="min-h-screen relative">
-      
-      {/* GLOBAL WALLPAPER */}
       <div className="fixed inset-0 z-[-1]">
         {globalBgUrl ? (
           <img src={globalBgUrl} className="w-full h-full object-cover opacity-20" />
@@ -209,12 +208,13 @@ export default function Home() {
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            
-            {/* AUDIO FOLDERS */}
             <AudioGallery audios={data.audios} />
-            
             <Library books={data.books} />
             <Testimonials testimonials={data.testimonials} />
+            
+            {/* NEW: Student Showcase Section */}
+            <StudentShowcase performances={data.performances} />
+            
             <TeacherBio teacher={data.teacher} />
           </>
         ) : (
