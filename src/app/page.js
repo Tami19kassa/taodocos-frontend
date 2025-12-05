@@ -239,6 +239,7 @@ export default function Home() {
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
         level={selectedLevel} 
+        settings={data.settings}  
       />
     </main>
   );
