@@ -20,3 +20,28 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #d97706; }
 
 iframe { width: 100%; height: 100%; }
+
+/* ... existing css ... */
+
+/* MARQUEE ANIMATION */
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll {
+  animation: scroll 40s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused; /* Pauses when user hovers to read */
+}
+
+/* Hide Scrollbar for Horizontal Sections */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
