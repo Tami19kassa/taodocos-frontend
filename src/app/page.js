@@ -210,10 +210,12 @@ export default function Home() {
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
             <AudioGallery audios={data.audios} />
             <Library books={data.books} />
-            <Testimonials testimonials={data.testimonials} />
             
-            {/* NEW: Student Showcase Section */}
+            
+             
             <StudentShowcase performances={data.performances} />
+
+            <Testimonials testimonials={data.testimonials} />
             
             <TeacherBio teacher={data.teacher} />
           </>
