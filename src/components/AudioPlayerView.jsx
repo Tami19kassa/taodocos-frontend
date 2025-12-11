@@ -1,148 +1,245 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Music, ChevronLeft, Loader2 } from 'lucide-react';
+import { Play, Pause, ChevronLeft, SkipBack, SkipForward, Music, Heart, MoreHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function AudioPlayerView({ folder, onExit }) {
   const [tracks, setTracks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [playingId, setPlayingId] = useState(null);
-  const audioRefs = useRef({});
+  const [visibleCount, setVisibleCount] = useState(10); // PAGINATION LIMIT
+  const [currentTrack, setCurrentTrack] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState("0:00");
+  const [duration, setDuration] = useState("0:00");
+  
+  const audioRef = useRef(null);
 
-  // 1. Fetch Tracks for this Folder on Load
+  // 1. Fetch Tracks
   useEffect(() => {
     const fetchTracks = async () => {
       try {
         const res = await fetch(`${STRAPI_URL}/api/audio-tracks?filters[audio_folder][id][$eq]=${folder.id}&populate=*`);
         const json = await res.json();
-        setTracks(json.data || []);
+        const allTracks = json.data || [];
+        setTracks(allTracks);
+        // Auto-select first track (paused)
+        if (allTracks.length > 0) setCurrentTrack(allTracks[0]);
       } catch (err) {
         console.error("Error fetching tracks:", err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchTracks();
   }, [folder]);
 
-  const togglePlay = (id) => {
-    const audio = audioRefs.current[id];
-    if (!audio) return;
-
-    if (playingId === id) {
-      audio.pause();
-      setPlayingId(null);
+  // 2. Audio Control Logic
+  useEffect(() => {
+    if (isPlaying) {
+      audioRef.current?.play();
     } else {
-      if (playingId && audioRefs.current[playingId]) {
-        audioRefs.current[playingId].pause();
-      }
-      audio.play();
-      setPlayingId(id);
+      audioRef.current?.pause();
+    }
+  }, [isPlaying, currentTrack]);
+
+  const handleTimeUpdate = () => {
+    const current = audioRef.current.currentTime;
+    const total = audioRef.current.duration;
+    setProgress((current / total) * 100);
+    
+    // Format Time
+    const format = (time) => {
+      const min = Math.floor(time / 60);
+      const sec = Math.floor(time % 60);
+      return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    };
+    setCurrentTime(format(current));
+    if (total) setDuration(format(total));
+  };
+
+  const playTrack = (track) => {
+    if (currentTrack?.id === track.id) {
+      setIsPlaying(!isPlaying);
+    } else {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      setProgress(0);
     }
   };
 
-  return (
-    <div className="pt-24 pb-12 px-4 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-        <button 
-          onClick={onExit} 
-          className="flex items-center gap-2 text-stone-400 hover:text-amber-500 transition-colors group"
-        >
-           <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-amber-500/50 transition-all">
-             <ChevronLeft size={16} />
-           </div>
-           <span className="text-sm font-medium tracking-wide font-cinzel">Back to Sanctuary</span>
-        </button>
+  const handleNext = () => {
+    const idx = tracks.findIndex(t => t.id === currentTrack.id);
+    if (idx < tracks.length - 1) playTrack(tracks[idx + 1]);
+  };
 
-        <div className="text-right">
-           <span className="text-amber-600 font-bold tracking-widest uppercase text-xs mb-1 block">Collection</span>
-           <h1 className="font-cinzel text-3xl md:text-5xl text-white">{folder.title}</h1>
-        </div>
+  const handlePrev = () => {
+    const idx = tracks.findIndex(t => t.id === currentTrack.id);
+    if (idx > 0) playTrack(tracks[idx - 1]);
+  };
+
+  // Helper to get URL
+  const getCover = (track) => {
+    const raw = track?.cover_art?.url || track?.cover?.url || folder.cover?.url;
+    return raw ? (raw.startsWith('http') ? raw : `${STRAPI_URL}${raw}`) : null;
+  };
+
+  const getAudioUrl = (track) => {
+    const raw = track?.audio_file?.url;
+    return raw ? (raw.startsWith('http') ? raw : `${STRAPI_URL}${raw}`) : null;
+  };
+
+  // Current Track Data
+  const activeCover = getCover(currentTrack);
+  const activeAudioUrl = getAudioUrl(currentTrack);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#120a05] flex flex-col md:flex-row overflow-hidden">
+      
+      {/* --- DYNAMIC BACKGROUND BLUR --- */}
+      <div className="absolute inset-0 z-0">
+        {activeCover && (
+          <img 
+            src={activeCover} 
+            className="w-full h-full object-cover opacity-40 blur-[100px] scale-125 transition-all duration-1000"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      {/* TRACK LIST */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin text-amber-600" size={40} />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tracks.map((track) => {
-            // URL Logic
-            const audioData = track.audio_file || track.audio_file?.data?.attributes;
-            const rawAudio = audioData?.url;
-            const coverData = track.cover_art || track.cover;
-            const rawCover = coverData?.url;
+      {/* --- LEFT: PLAYLIST (Scrollable) --- */}
+      <div className="relative z-10 w-full md:w-1/2 h-1/2 md:h-full p-6 md:p-12 overflow-y-auto custom-scrollbar flex flex-col">
+        <button onClick={onExit} className="flex items-center gap-2 text-white/60 hover:text-white mb-8 w-fit transition-colors">
+          <ChevronLeft /> Back
+        </button>
 
-            const audioUrl = rawAudio ? (rawAudio.startsWith('http') ? rawAudio : `${STRAPI_URL}${rawAudio}`) : null;
-            const trackCover = rawCover ? (rawCover.startsWith('http') ? rawCover : `${STRAPI_URL}${rawCover}`) : null;
+        <h2 className="font-cinzel text-3xl text-white mb-2">{folder.title}</h2>
+        <p className="text-white/50 text-sm mb-8">{tracks.length} Hymns in Collection</p>
 
-            if (!audioUrl) return null;
-
-            const isPlaying = playingId === track.id;
-
+        <div className="space-y-2">
+          {/* LOAD ONLY 10 AT A TIME */}
+          {tracks.slice(0, visibleCount).map((track, index) => {
+            const isActive = currentTrack?.id === track.id;
             return (
               <div 
-                key={track.id} 
-                className={`p-4 rounded-xl flex items-center gap-6 transition-all duration-300 border ${
-                  isPlaying 
-                    ? 'bg-[#1a0f0a] border-amber-500/40 shadow-lg shadow-amber-900/10 scale-[1.01]' 
-                    : 'bg-[#1e100a]/40 border-white/5 hover:bg-[#1e100a] hover:border-white/10'
+                key={track.id}
+                onClick={() => playTrack(track)}
+                className={`p-4 rounded-xl flex items-center gap-4 cursor-pointer transition-all border ${
+                  isActive 
+                    ? 'bg-white/10 border-amber-500/50' 
+                    : 'bg-transparent border-transparent hover:bg-white/5'
                 }`}
               >
-                
-                {/* Track Cover / Visualizer */}
-                <div className="w-16 h-16 rounded-lg bg-black/50 overflow-hidden shrink-0 relative border border-white/5">
-                  {trackCover ? (
-                    <img src={trackCover} className={`w-full h-full object-cover transition-opacity ${isPlaying ? 'opacity-100' : 'opacity-60'}`} />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-600">
-                      <Music size={24} />
-                    </div>
-                  )}
-                  {isPlaying && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-1">
-                       <div className="w-1 bg-amber-500 animate-[bounce_1s_infinite] h-3" />
-                       <div className="w-1 bg-amber-500 animate-[bounce_1.2s_infinite] h-5" />
-                       <div className="w-1 bg-amber-500 animate-[bounce_0.8s_infinite] h-3" />
-                    </div>
-                  )}
+                <div className="text-white/40 font-mono text-xs w-6">{index + 1}</div>
+                <div className="flex-1">
+                  <h4 className={`font-medium ${isActive ? 'text-amber-500' : 'text-white'}`}>{track.title}</h4>
                 </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <h4 className={`font-cinzel text-lg truncate ${isPlaying ? 'text-amber-500' : 'text-stone-300'}`}>
-                    {track.title}
-                  </h4>
-                  <p className="text-xs text-stone-500 uppercase tracking-widest">
-                    {isPlaying ? "Now Playing" : "Audio Track"}
-                  </p>
-                </div>
-
-                {/* Play Button */}
-                <button 
-                  onClick={() => togglePlay(track.id)}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
-                    isPlaying 
-                      ? 'bg-amber-600 text-black scale-110' 
-                      : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-white'
-                  }`}
-                >
-                  {isPlaying ? <Pause size={20} fill="black" /> : <Play size={20} fill="currentColor" className="ml-1" />}
-                </button>
-
-                <audio ref={el => audioRefs.current[track.id] = el} src={audioUrl} onEnded={() => setPlayingId(null)} />
+                {isActive && (
+                  <div className="flex gap-1 h-3 items-end">
+                     <div className="w-1 bg-amber-500 animate-[bounce_1s_infinite] h-full" />
+                     <div className="w-1 bg-amber-500 animate-[bounce_1.2s_infinite] h-2/3" />
+                     <div className="w-1 bg-amber-500 animate-[bounce_0.8s_infinite] h-full" />
+                  </div>
+                )}
               </div>
             );
           })}
-          
-          {tracks.length === 0 && (
-            <p className="text-stone-500 italic col-span-2 text-center py-10">No tracks found in this folder.</p>
-          )}
         </div>
-      )}
+
+        {/* LOAD MORE BUTTON */}
+        {visibleCount < tracks.length && (
+          <button 
+            onClick={() => setVisibleCount(prev => prev + 10)}
+            className="mt-6 py-3 w-full rounded-xl border border-white/10 text-white/60 hover:bg-white/5 hover:text-white transition-all text-sm uppercase tracking-widest"
+          >
+            Load More Hymns
+          </button>
+        )}
+      </div>
+
+      {/* --- RIGHT: NOW PLAYING (The Reference Image Look) --- */}
+      <div className="relative z-20 w-full md:w-1/2 h-1/2 md:h-full bg-black/40 backdrop-blur-xl border-t md:border-l border-white/10 flex flex-col justify-center items-center p-8 md:p-12">
+        
+        {currentTrack ? (
+          <div className="w-full max-w-md">
+            
+            {/* Album Art */}
+            <motion.div 
+              key={currentTrack.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="aspect-square w-full rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 mb-8 relative group"
+            >
+              {activeCover ? (
+                <img src={activeCover} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-stone-900 flex items-center justify-center">
+                  <Music size={64} className="text-stone-700" />
+                </div>
+              )}
+            </motion.div>
+
+            {/* Title & Info */}
+            <div className="flex justify-between items-end mb-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 line-clamp-1">{currentTrack.title}</h2>
+                <p className="text-white/60 text-sm">{folder.title}</p>
+              </div>
+              <Heart className="text-white/40 hover:text-amber-500 cursor-pointer transition-colors" />
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-8 group">
+              <input 
+                type="range" 
+                min="0" max="100" 
+                value={progress}
+                onChange={(e) => {
+                  const newTime = (e.target.value / 100) * audioRef.current.duration;
+                  audioRef.current.currentTime = newTime;
+                  setProgress(e.target.value);
+                }}
+                className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+              />
+              <div className="flex justify-between text-xs text-white/40 mt-2 font-mono">
+                <span>{currentTime}</span>
+                <span>{duration}</span>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between px-4">
+               <button className="text-white/60 hover:text-white"><MoreHorizontal /></button>
+               
+               <div className="flex items-center gap-6">
+                 <button onClick={handlePrev} className="text-white hover:text-amber-500 transition-colors"><SkipBack size={28} /></button>
+                 
+                 <button 
+                   onClick={() => setIsPlaying(!isPlaying)}
+                   className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-black hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.4)]"
+                 >
+                   {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-1" />}
+                 </button>
+                 
+                 <button onClick={handleNext} className="text-white hover:text-amber-500 transition-colors"><SkipForward size={28} /></button>
+               </div>
+
+               <button className="text-white/60 hover:text-white"><Music size={20} /></button>
+            </div>
+
+            {/* Hidden Audio Element */}
+            <audio 
+              ref={audioRef} 
+              src={activeAudioUrl} 
+              onTimeUpdate={handleTimeUpdate}
+              onEnded={handleNext}
+              onLoadedMetadata={handleTimeUpdate}
+            />
+
+          </div>
+        ) : (
+          <p className="text-white/50">Select a hymn to begin.</p>
+        )}
+      </div>
     </div>
   );
 }
