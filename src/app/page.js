@@ -16,38 +16,35 @@ import Player from '@/components/Player';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
-import StudentShowcase from '@/components/StudentShowcase'; // NEW IMPORT
+import StudentShowcase from '@/components/StudentShowcase';
+import AudioPlayerView from '@/components/AudioPlayerView'; // NEW
 
 // --- CONFIGURATION ---
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function Home() {
-  // -- STATE --
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // VIEW STATE: 'home' | 'player' | 'audio_player'
   const [view, setView] = useState('home'); 
   
-  // Data State
   const [data, setData] = useState({ 
     levels: [], books: [], teacher: null, landing: null, 
     promotions: [], testimonials: [], audios: [], 
-    performances: [], // NEW: Stores student performances
+    performances: [],
     settings: null,
     userOwnedLevels: [] 
   });
   
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
+  const [selectedAudioFolder, setSelectedAudioFolder] = useState(null); // State for audio
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
-   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [view]);  
-
-
- // 1. INITIALIZATION & STATE RECOVERY
+  // 1. INITIALIZATION & STATE RECOVERY
   useEffect(() => {
     fetchPublicData();
     const storedToken = localStorage.getItem('strapi_jwt');
@@ -59,7 +56,7 @@ export default function Home() {
       setUser(parsedUser);
       fetchUserData(storedToken, parsedUser.id);
       
-      // --- FIX 2: RESTORE PREVIOUS SESSION ---
+      // RESTORE SESSION
       const savedLevel = localStorage.getItem('last_level');
       const savedLesson = localStorage.getItem('last_lesson');
       
@@ -73,6 +70,11 @@ export default function Home() {
     }
   }, []);
 
+  // AUTO SCROLL TO TOP ON VIEW CHANGE
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);
+
   // 2. DATA FETCHING
   const fetchPublicData = async () => {
     try {
@@ -85,7 +87,6 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json()),
-        // NEW FETCH
         fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()) 
       ]);
 
@@ -101,7 +102,7 @@ export default function Home() {
         testimonials: getVal(results[5]) || [],
         settings: getVal(results[6]) || null,
         audios: getVal(results[7]) || [],
-        performances: getVal(results[8]) || [] // Store it
+        performances: getVal(results[8]) || []
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -120,7 +121,7 @@ export default function Home() {
     } catch (e) { console.error(e); setLoading(false); }
   };
 
-  // 3. LOGIC
+  // 3. HANDLERS
   const handleAuth = async (formData, isRegistering) => {
     setAuthError('');
     setLoading(true);
@@ -162,6 +163,11 @@ export default function Home() {
     localStorage.removeItem('last_lesson');
   };
 
+  const handleAudioFolderClick = (folder) => {
+    setSelectedAudioFolder(folder);
+    setView('audio_player');
+  };
+
   const isUnlocked = (level) => {
     if (!data.userOwnedLevels) return false;
     return data.userOwnedLevels.some(owned => owned.id === level.id || owned.documentId === level.documentId);
@@ -169,14 +175,12 @@ export default function Home() {
 
   const handleLevelClick = async (level) => {
     try {
-      // --- FIX: ADDED '&pagination[pageSize]=100' TO THE END ---
       const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc&pagination[pageSize]=100`, {
           headers: { Authorization: `Bearer ${jwt}` }
       });
       const json = await res.json();
       let lessons = json.data;
 
-      // Force sort just in case (Frontend sort)
       if (lessons && lessons.length > 0) {
         lessons = lessons.sort((a, b) => (a.order || 0) - (b.order || 0));
       }
@@ -189,7 +193,6 @@ export default function Home() {
       const unlocked = isUnlocked(level);
       let initialLesson = lessons[0];
       
-      // If locked, find the first FREE sample
       if (!unlocked) {
         const firstFree = lessons.find(l => l.is_free_sample);
         if (firstFree) initialLesson = firstFree;
@@ -199,6 +202,7 @@ export default function Home() {
       setCurrentLesson(initialLesson);
       setView('player');
 
+      // Save State
       localStorage.setItem('last_level', JSON.stringify({ ...level, lessons: lessons }));
       localStorage.setItem('last_lesson', JSON.stringify(initialLesson));
 
@@ -206,6 +210,7 @@ export default function Home() {
       console.error(err);
     }
   };
+
   // --- RENDER ---
   const rawBgUrl = data.landing?.hero_background?.url;
   const globalBgUrl = rawBgUrl 
@@ -229,35 +234,46 @@ export default function Home() {
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
       
       <div className="flex-grow relative z-10">
-        {view === 'home' ? (
+        
+        {/* VIEW 1: HOME */}
+        {view === 'home' && (
           <>
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            <AudioGallery audios={data.audios} />
+            
+            {/* Audio Gallery (Pass the click handler) */}
+            <AudioGallery audios={data.audios} onFolderClick={handleAudioFolderClick} />
+            
             <Library books={data.books} />
-            
-            
-             
             <StudentShowcase performances={data.performances} />
-
             <Testimonials testimonials={data.testimonials} />
-            
             <TeacherBio teacher={data.teacher} />
           </>
-        ) : (
+        )}
+
+        {/* VIEW 2: COURSE PLAYER */}
+        {view === 'player' && (
           <Player 
             currentLesson={currentLesson} 
             selectedLevel={selectedLevel} 
             setCurrentLesson={setCurrentLesson} 
-             
             isLevelUnlocked={isUnlocked(selectedLevel)}
             jwt={jwt} 
             user={user} 
-            onUnlockRequest={() => setModalOpen(true)}
+            onUnlockRequest={() => setModalOpen(true)} 
             onExit={handleExitPlayer}
           />
         )}
+
+        {/* VIEW 3: AUDIO PLAYER */}
+        {view === 'audio_player' && (
+          <AudioPlayerView 
+             folder={selectedAudioFolder}
+             onExit={() => setView('home')}
+          />
+        )}
+
       </div>
 
       <Footer settings={data.settings} />
