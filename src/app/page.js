@@ -17,7 +17,7 @@ import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import StudentShowcase from '@/components/StudentShowcase';
-import AudioPlayerView from '@/components/AudioPlayerView'; // NEW
+import AudioPlayerView from '@/components/AudioPlayerView';
 
 // --- CONFIGURATION ---
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -26,21 +26,17 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // VIEW STATE: 'home' | 'player' | 'audio_player'
   const [view, setView] = useState('home'); 
   
   const [data, setData] = useState({ 
     levels: [], books: [], teacher: null, landing: null, 
     promotions: [], testimonials: [], audios: [], 
-    performances: [],
-    settings: null,
-    userOwnedLevels: [] 
+    performances: [], settings: null, userOwnedLevels: [] 
   });
   
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const [selectedAudioFolder, setSelectedAudioFolder] = useState(null); // State for audio
+  const [selectedAudioFolder, setSelectedAudioFolder] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -56,26 +52,37 @@ export default function Home() {
       setUser(parsedUser);
       fetchUserData(storedToken, parsedUser.id);
       
-      // RESTORE SESSION
-      const savedLevel = localStorage.getItem('last_level');
-      const savedLesson = localStorage.getItem('last_lesson');
-      
-      if (savedLevel && savedLesson) {
-        setSelectedLevel(JSON.parse(savedLevel));
-        setCurrentLesson(JSON.parse(savedLesson));
-        setView('player'); // Go straight to player
+      // --- FIX: RESTORE CORRECT VIEW ---
+      const lastView = localStorage.getItem('last_view'); // Check which page we were on
+
+      if (lastView === 'audio_player') {
+        // Restore Audio Session
+        const savedFolder = localStorage.getItem('last_audio_folder');
+        if (savedFolder) {
+          setSelectedAudioFolder(JSON.parse(savedFolder));
+          setView('audio_player');
+        }
+      } else if (lastView === 'player') {
+        // Restore Course Session
+        const savedLevel = localStorage.getItem('last_level');
+        const savedLesson = localStorage.getItem('last_lesson');
+        if (savedLevel && savedLesson) {
+          setSelectedLevel(JSON.parse(savedLevel));
+          setCurrentLesson(JSON.parse(savedLesson));
+          setView('player');
+        }
       }
     } else {
       setLoading(false);
     }
   }, []);
 
-  // AUTO SCROLL TO TOP ON VIEW CHANGE
+  // AUTO SCROLL TO TOP
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [view]);
 
-  // 2. DATA FETCHING
+  // 2. DATA FETCHING (Same as before)
   const fetchPublicData = async () => {
     try {
       const results = await Promise.allSettled([
@@ -123,6 +130,7 @@ export default function Home() {
 
   // 3. HANDLERS
   const handleAuth = async (formData, isRegistering) => {
+    // ... (Auth Logic Same as before)
     setAuthError('');
     setLoading(true);
     const endpoint = isRegistering ? '/api/auth/local/register' : '/api/auth/local';
@@ -133,7 +141,6 @@ export default function Home() {
         body: JSON.stringify(formData)
       });
       const result = await res.json();
-      
       if (result.error) {
         setAuthError(result.error.message);
         setLoading(false);
@@ -159,13 +166,19 @@ export default function Home() {
 
   const handleExitPlayer = () => {
     setView('home');
+    localStorage.removeItem('last_view'); // Clear view state
     localStorage.removeItem('last_level');
-    localStorage.removeItem('last_lesson');
+    localStorage.removeItem('last_audio_folder');
   };
 
+  // --- FIX: SAVE AUDIO STATE ---
   const handleAudioFolderClick = (folder) => {
     setSelectedAudioFolder(folder);
     setView('audio_player');
+    
+    // Save to LocalStorage
+    localStorage.setItem('last_view', 'audio_player');
+    localStorage.setItem('last_audio_folder', JSON.stringify(folder));
   };
 
   const isUnlocked = (level) => {
@@ -202,7 +215,8 @@ export default function Home() {
       setCurrentLesson(initialLesson);
       setView('player');
 
-      // Save State
+      // Save Course State
+      localStorage.setItem('last_view', 'player');
       localStorage.setItem('last_level', JSON.stringify({ ...level, lessons: lessons }));
       localStorage.setItem('last_lesson', JSON.stringify(initialLesson));
 
@@ -234,17 +248,12 @@ export default function Home() {
       <Navbar user={user} onLogout={handleLogout} setView={setView} />
       
       <div className="flex-grow relative z-10">
-        
-        {/* VIEW 1: HOME */}
         {view === 'home' && (
           <>
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            
-            {/* Audio Gallery (Pass the click handler) */}
             <AudioGallery audios={data.audios} onFolderClick={handleAudioFolderClick} />
-            
             <Library books={data.books} />
             <StudentShowcase performances={data.performances} />
             <Testimonials testimonials={data.testimonials} />
@@ -252,7 +261,6 @@ export default function Home() {
           </>
         )}
 
-        {/* VIEW 2: COURSE PLAYER */}
         {view === 'player' && (
           <Player 
             currentLesson={currentLesson} 
@@ -261,22 +269,21 @@ export default function Home() {
             isLevelUnlocked={isUnlocked(selectedLevel)}
             jwt={jwt} 
             user={user} 
-            onUnlockRequest={() => setModalOpen(true)} 
+            onUnlockRequest={() => setModalOpen(true)}
             onExit={handleExitPlayer}
           />
         )}
 
-        {/* VIEW 3: AUDIO PLAYER */}
         {view === 'audio_player' && (
           <AudioPlayerView 
              folder={selectedAudioFolder}
-             onExit={() => setView('home')}
+             onExit={handleExitPlayer} // Use the standard exit handler
           />
         )}
-
       </div>
 
-      <Footer settings={data.settings} />
+      {/* Only show Footer on Home */}
+      {view === 'home' && <Footer settings={data.settings} />}
 
       <PaymentModal 
         isOpen={modalOpen} 
