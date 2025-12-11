@@ -18,6 +18,8 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
     setIsPlaying(false);
     setIsLoading(false);
     setCurrentLesson(lesson);
+    localStorage.setItem('last_lesson', JSON.stringify(lesson));
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

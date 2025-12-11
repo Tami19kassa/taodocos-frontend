@@ -42,7 +42,12 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // 1. INITIALIZATION
+   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);  
+
+
+ // 1. INITIALIZATION & STATE RECOVERY
   useEffect(() => {
     fetchPublicData();
     const storedToken = localStorage.getItem('strapi_jwt');
@@ -53,6 +58,16 @@ export default function Home() {
       setJwt(storedToken);
       setUser(parsedUser);
       fetchUserData(storedToken, parsedUser.id);
+      
+      // --- FIX 2: RESTORE PREVIOUS SESSION ---
+      const savedLevel = localStorage.getItem('last_level');
+      const savedLesson = localStorage.getItem('last_lesson');
+      
+      if (savedLevel && savedLesson) {
+        setSelectedLevel(JSON.parse(savedLevel));
+        setCurrentLesson(JSON.parse(savedLesson));
+        setView('player'); // Go straight to player
+      }
     } else {
       setLoading(false);
     }
@@ -141,6 +156,12 @@ export default function Home() {
     setView('home');
   };
 
+  const handleExitPlayer = () => {
+    setView('home');
+    localStorage.removeItem('last_level');
+    localStorage.removeItem('last_lesson');
+  };
+
   const isUnlocked = (level) => {
     if (!data.userOwnedLevels) return false;
     return data.userOwnedLevels.some(owned => owned.id === level.id || owned.documentId === level.documentId);
@@ -177,6 +198,9 @@ export default function Home() {
       setSelectedLevel({ ...level, lessons: lessons });
       setCurrentLesson(initialLesson);
       setView('player');
+
+      localStorage.setItem('last_level', JSON.stringify({ ...level, lessons: lessons }));
+      localStorage.setItem('last_lesson', JSON.stringify(initialLesson));
 
     } catch (err) {
       console.error(err);
@@ -226,11 +250,12 @@ export default function Home() {
             currentLesson={currentLesson} 
             selectedLevel={selectedLevel} 
             setCurrentLesson={setCurrentLesson} 
-            onExit={() => setView('home')}
+             
             isLevelUnlocked={isUnlocked(selectedLevel)}
             jwt={jwt} 
             user={user} 
             onUnlockRequest={() => setModalOpen(true)}
+            onExit={handleExitPlayer}
           />
         )}
       </div>
