@@ -148,12 +148,14 @@ export default function Home() {
 
   const handleLevelClick = async (level) => {
     try {
-      const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc`, {
+      // --- FIX: ADDED '&pagination[pageSize]=100' TO THE END ---
+      const res = await fetch(`${STRAPI_URL}/api/lessons?filters[level][id][$eq]=${level.id}&sort=order:asc&pagination[pageSize]=100`, {
           headers: { Authorization: `Bearer ${jwt}` }
       });
       const json = await res.json();
       let lessons = json.data;
 
+      // Force sort just in case (Frontend sort)
       if (lessons && lessons.length > 0) {
         lessons = lessons.sort((a, b) => (a.order || 0) - (b.order || 0));
       }
@@ -166,6 +168,7 @@ export default function Home() {
       const unlocked = isUnlocked(level);
       let initialLesson = lessons[0];
       
+      // If locked, find the first FREE sample
       if (!unlocked) {
         const firstFree = lessons.find(l => l.is_free_sample);
         if (firstFree) initialLesson = firstFree;
@@ -179,7 +182,6 @@ export default function Home() {
       console.error(err);
     }
   };
-
   // --- RENDER ---
   const rawBgUrl = data.landing?.hero_background?.url;
   const globalBgUrl = rawBgUrl 
