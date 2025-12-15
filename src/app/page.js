@@ -130,71 +130,36 @@ export default function Home() {
     } catch (e) { console.error(e); setLoading(false); }
   };
 
-// 3. HANDLERS
-  const handleAuth = async (formData, isRegistering) => {
-    setAuthError('');
-    setLoading(true);
-    
-    // LOGIN Logic
-    if (!isRegistering) {
-      try {
-        const res = await fetch(`${STRAPI_URL}/api/auth/local`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-             identifier: formData.email,
-             password: formData.password
-          })
-        });
-        const result = await res.json();
-        
-        if (result.error) {
-          // Custom message for unverified users
-          if (result.error.message.includes("confirmed")) {
-             setAuthError("Your account is pending Admin approval.");
-          } else {
-             setAuthError("Invalid email or password.");
-          }
-          setLoading(false);
-        } else {
-          localStorage.setItem('strapi_jwt', result.jwt);
-          localStorage.setItem('strapi_user', JSON.stringify(result.user));
-          setJwt(result.jwt);
-          setUser(result.user);
-          fetchUserData(result.jwt, result.user.id);
-        }
-      } catch (error) {
-        setAuthError("Connection failed.");
-        setLoading(false);
-      }
-    } 
-    
-    // REGISTER Logic (New Flow)
-    else {
-      try {
-        const res = await fetch(`${STRAPI_URL}/api/auth/local/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        const result = await res.json();
-
-        if (result.error) {
-          setAuthError(result.error.message);
-          setLoading(false);
-        } else {
-          // SUCCESS! But DO NOT login.
-          setLoading(false);
-          return "PENDING"; // Signal to AuthScreen that registration worked
-        }
-      } catch (error) {
-        setAuthError("Registration failed.");
-        setLoading(false);
-      }
-    }
-  };
 
   
+  // 3. HANDLERS
+  const handleAuth = async (formData, isRegistering) => {
+    // ... (Auth Logic Same as before)
+    setAuthError('');
+    setLoading(true);
+    const endpoint = isRegistering ? '/api/auth/local/register' : '/api/auth/local';
+    try {
+      const res = await fetch(`${STRAPI_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const result = await res.json();
+      if (result.error) {
+        setAuthError(result.error.message);
+        setLoading(false);
+      } else {
+        localStorage.setItem('strapi_jwt', result.jwt);
+        localStorage.setItem('strapi_user', JSON.stringify(result.user));
+        setJwt(result.jwt);
+        setUser(result.user);
+        fetchUserData(result.jwt, result.user.id);
+      }
+    } catch (error) {
+      setAuthError("Connection failed.");
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
