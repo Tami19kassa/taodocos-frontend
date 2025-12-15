@@ -15,6 +15,7 @@ export default function AudioPlayerView({ folder, onExit }) {
   
   const audioRef = useRef(null);
 
+  // 1. Fetch Tracks
   useEffect(() => {
     if (!folder) return;
     const fetchTracks = async () => {
@@ -31,6 +32,7 @@ export default function AudioPlayerView({ folder, onExit }) {
     fetchTracks();
   }, [folder]);
 
+  // 2. Audio Control
   useEffect(() => {
     if (isPlaying) audioRef.current?.play();
     else audioRef.current?.pause();
@@ -86,35 +88,37 @@ export default function AudioPlayerView({ folder, onExit }) {
   const activeAudioUrl = getAudioUrl(currentTrack);
 
   return (
-    // Use 100dvh (Dynamic Viewport Height) to fix mobile browser bar issues
     <div className="fixed inset-0 z-[200] bg-[#120a05] flex flex-col md:flex-row overflow-hidden h-[100dvh]">
       
       {/* Background Blur */}
       <div className="absolute inset-0 z-0">
         {activeCover && (
-          <img src={activeCover} className="w-full h-full object-cover opacity-30 blur-[80px] scale-110" />
+          <img 
+            src={activeCover} 
+            className="w-full h-full object-cover opacity-30 blur-[80px] scale-110 transition-all duration-1000"
+          />
         )}
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      {/* --- SECTION A: PLAYER CONTROLS (Top on Mobile, Right on Desktop) --- */}
-      {/* order-1 puts this at the top on mobile. md:order-2 puts it right on desktop */}
-      <div className="relative z-20 w-full md:w-1/2 h-[55%] md:h-full bg-black/20 backdrop-blur-xl flex flex-col justify-center items-center p-6 md:p-12 order-1 md:order-2 border-b md:border-b-0 md:border-l border-white/10">
+      {/* --- SECTION A: PLAYER CONTROLS --- */}
+      {/* FIX: Added pt-28 (Padding Top) to push content down below the navbar */}
+      <div className="relative z-20 w-full md:w-1/2 h-[55%] md:h-full bg-black/20 backdrop-blur-xl flex flex-col justify-center items-center px-6 pt-28 pb-6 md:p-12 order-1 md:order-2 border-b md:border-b-0 md:border-l border-white/10">
         
-        {/* Mobile Back Button */}
-        <button onClick={onExit} className="absolute top-4 left-4 md:hidden flex items-center gap-2 text-stone-400 bg-black/40 px-3 py-1.5 rounded-full text-xs">
+        {/* Mobile Back Button (Moved down slightly) */}
+        <button onClick={onExit} className="absolute top-24 left-4 md:hidden flex items-center gap-2 text-stone-400 bg-black/40 px-3 py-1.5 rounded-full text-xs z-30">
           <ChevronLeft size={14} /> Back
         </button>
 
         {currentTrack ? (
           <div className="w-full max-w-md flex flex-col items-center">
             
-            {/* Album Art - Responsive Size */}
+            {/* Album Art */}
             <motion.div 
               key={currentTrack.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="aspect-square w-48 h-48 sm:w-64 sm:h-64 md:w-full md:max-w-xs rounded-xl overflow-hidden shadow-2xl border border-white/10 mb-6 bg-[#0c0a09]"
+              className="aspect-square w-40 h-40 sm:w-56 sm:h-56 md:w-full md:max-w-xs rounded-xl overflow-hidden shadow-2xl border border-white/10 mb-6 bg-[#0c0a09]"
             >
               {activeCover ? (
                 <img src={activeCover} className="w-full h-full object-cover" />
@@ -127,7 +131,7 @@ export default function AudioPlayerView({ folder, onExit }) {
 
             {/* Info */}
             <div className="text-center mb-6 w-full">
-              <h2 className="text-xl md:text-3xl font-bold text-white mb-1 line-clamp-1 font-cinzel">{currentTrack.title}</h2>
+              <h2 className="text-lg md:text-3xl font-bold text-white mb-1 line-clamp-1 font-cinzel">{currentTrack.title}</h2>
               <p className="text-stone-400 text-xs md:text-sm">{folder.title}</p>
             </div>
 
@@ -145,13 +149,13 @@ export default function AudioPlayerView({ folder, onExit }) {
 
             {/* Controls */}
             <div className="flex items-center gap-8 md:gap-10">
-               <button onClick={handlePrev} className="text-stone-300 hover:text-amber-500"><SkipBack size={28} /></button>
+               <button onClick={handlePrev} className="text-stone-300 hover:text-amber-500"><SkipBack size={24} md:size={28} /></button>
                
                <button onClick={() => setIsPlaying(!isPlaying)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-amber-600 text-black flex items-center justify-center shadow-lg shadow-amber-900/40">
                  {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-1" />}
                </button>
                
-               <button onClick={handleNext} className="text-stone-300 hover:text-amber-500"><SkipForward size={28} /></button>
+               <button onClick={handleNext} className="text-stone-300 hover:text-amber-500"><SkipForward size={24} md:size={28} /></button>
             </div>
 
             <audio ref={audioRef} src={activeAudioUrl} onTimeUpdate={handleTimeUpdate} onEnded={handleNext} onLoadedMetadata={handleTimeUpdate} />
@@ -161,11 +165,9 @@ export default function AudioPlayerView({ folder, onExit }) {
         )}
       </div>
 
-      {/* --- SECTION B: PLAYLIST (Bottom on Mobile, Left on Desktop) --- */}
-      {/* order-2 puts this at bottom on mobile. md:order-1 puts it left on desktop */}
+      {/* --- SECTION B: PLAYLIST --- */}
       <div className="relative z-10 w-full md:w-1/2 h-[45%] md:h-full p-4 md:p-12 overflow-y-auto custom-scrollbar flex flex-col order-2 md:order-1 bg-[#120a05]/80">
         
-        {/* Desktop Back Button */}
         <button onClick={onExit} className="hidden md:flex items-center gap-2 text-stone-400 hover:text-amber-500 mb-8 w-fit transition-colors group">
           <ChevronLeft className="group-hover:-translate-x-1 transition-transform" /> Back to Sanctuary
         </button>

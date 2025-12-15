@@ -141,7 +141,8 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                 </div>
 
                 <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
-                  {selectedLevel.lessons.map((lesson, idx) => {
+                  {/* ... inside the map loop ... */}
+                {selectedLevel.lessons.map((lesson, idx) => {
                     const isPlayable = isLevelUnlocked || lesson.is_free_sample;
                     return (
                       <button 
@@ -149,20 +150,39 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         onClick={() => handleLessonChange(lesson)} 
                         className={`w-full p-4 text-left text-sm rounded-lg transition-all flex items-start gap-3 group ${
                           currentLesson.id === lesson.id 
-                            ? 'bg-amber-900/20 border border-amber-700/40' 
-                            : 'hover:bg-white/5 border border-transparent'
+                            ? 'bg-amber-900/40 border border-amber-600/50 shadow-lg' // Active State
+                            : 'hover:bg-white/10 border border-transparent' // Inactive State
                         }`}
                       >
                         <div className="mt-0.5">
-                          {currentLesson.id === lesson.id ? <Play size={12} className="text-amber-500 fill-amber-500" /> :
-                           !isPlayable ? <Lock size={12} className="text-stone-600" /> :
-                           <span className="font-mono text-xs text-stone-600">{String(idx + 1).padStart(2, '0')}</span>}
+                          {currentLesson.id === lesson.id ? (
+                            <Play size={12} className="text-amber-500 fill-amber-500" />
+                          ) : !isPlayable ? (
+                            <Lock size={12} className="text-stone-500" />
+                          ) : (
+                            // Made number lighter (stone-500 instead of 600)
+                            <span className="font-mono text-xs text-stone-500 group-hover:text-stone-300">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                          )}
                         </div>
+                        
                         <div className="flex-1">
-                          <span className={`block font-serif ${currentLesson.id === lesson.id ? 'text-amber-100' : isPlayable ? 'text-stone-400 group-hover:text-stone-200' : 'text-stone-600'}`}>
+                          <span className={`block font-serif tracking-wide ${
+                            currentLesson.id === lesson.id 
+                              ? 'text-white font-bold' 
+                              : isPlayable 
+                                ? 'text-stone-300 group-hover:text-white' // MUCH BRIGHTER TEXT
+                                : 'text-stone-500'
+                          }`}>
                             {lesson.title}
                           </span>
-                          {lesson.is_free_sample && !isLevelUnlocked && <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mt-1 block">Free Preview</span>}
+                          
+                          {lesson.is_free_sample && !isLevelUnlocked && (
+                            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mt-1 block">
+                              Free Preview
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
