@@ -15,7 +15,6 @@ export default function AudioPlayerView({ folder, onExit }) {
   
   const audioRef = useRef(null);
 
-  // 1. Fetch Tracks
   useEffect(() => {
     if (!folder) return;
     const fetchTracks = async () => {
@@ -32,7 +31,6 @@ export default function AudioPlayerView({ folder, onExit }) {
     fetchTracks();
   }, [folder]);
 
-  // 2. Audio Control
   useEffect(() => {
     if (isPlaying) audioRef.current?.play();
     else audioRef.current?.pause();
@@ -101,11 +99,9 @@ export default function AudioPlayerView({ folder, onExit }) {
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      {/* --- SECTION A: PLAYER CONTROLS --- */}
-      {/* FIX: Added pt-28 (Padding Top) to push content down below the navbar */}
+      {/* --- PLAYER CONTROLS --- */}
       <div className="relative z-20 w-full md:w-1/2 h-[55%] md:h-full bg-black/20 backdrop-blur-xl flex flex-col justify-center items-center px-6 pt-28 pb-6 md:p-12 order-1 md:order-2 border-b md:border-b-0 md:border-l border-white/10">
         
-        {/* Mobile Back Button (Moved down slightly) */}
         <button onClick={onExit} className="absolute top-24 left-4 md:hidden flex items-center gap-2 text-stone-400 bg-black/40 px-3 py-1.5 rounded-full text-xs z-30">
           <ChevronLeft size={14} /> Back
         </button>
@@ -147,15 +143,19 @@ export default function AudioPlayerView({ folder, onExit }) {
               </div>
             </div>
 
-            {/* Controls */}
+            {/* Controls (Fixed Responsive Size) */}
             <div className="flex items-center gap-8 md:gap-10">
-               <button onClick={handlePrev} className="text-stone-300 hover:text-amber-500"><SkipBack size={24} md:size={28} /></button>
+               <button onClick={handlePrev} className="text-stone-300 hover:text-amber-500">
+                  <SkipBack size={28} />
+               </button>
                
                <button onClick={() => setIsPlaying(!isPlaying)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-amber-600 text-black flex items-center justify-center shadow-lg shadow-amber-900/40">
                  {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-1" />}
                </button>
                
-               <button onClick={handleNext} className="text-stone-300 hover:text-amber-500"><SkipForward size={24} md:size={28} /></button>
+               <button onClick={handleNext} className="text-stone-300 hover:text-amber-500">
+                  <SkipForward size={28} />
+               </button>
             </div>
 
             <audio ref={audioRef} src={activeAudioUrl} onTimeUpdate={handleTimeUpdate} onEnded={handleNext} onLoadedMetadata={handleTimeUpdate} />
@@ -165,7 +165,7 @@ export default function AudioPlayerView({ folder, onExit }) {
         )}
       </div>
 
-      {/* --- SECTION B: PLAYLIST --- */}
+      {/* --- PLAYLIST --- */}
       <div className="relative z-10 w-full md:w-1/2 h-[45%] md:h-full p-4 md:p-12 overflow-y-auto custom-scrollbar flex flex-col order-2 md:order-1 bg-[#120a05]/80">
         
         <button onClick={onExit} className="hidden md:flex items-center gap-2 text-stone-400 hover:text-amber-500 mb-8 w-fit transition-colors group">
