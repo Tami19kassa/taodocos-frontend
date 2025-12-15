@@ -86,7 +86,8 @@ export default function Home() {
   const fetchPublicData = async () => {
     try {
       const results = await Promise.allSettled([
-        fetch(`${STRAPI_URL}/api/levels?populate=*`).then(r=>r.json()), 
+         fetch(`${STRAPI_URL}/api/levels?populate=*&sort=rank:asc`).then(r=>r.json()), 
+        
         fetch(`${STRAPI_URL}/api/books?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`).then(r=>r.json()),
