@@ -53,7 +53,7 @@ export default function Home() {
       fetchUserData(storedToken, parsedUser.id);
       
       // --- FIX: RESTORE CORRECT VIEW ---
-      const lastView = localStorage.getItem('last_view'); // Check which page we were on
+ /*     const lastView = localStorage.getItem('last_view'); // Check which page we were on
 
       if (lastView === 'audio_player') {
         // Restore Audio Session
@@ -70,8 +70,8 @@ export default function Home() {
           setSelectedLevel(JSON.parse(savedLevel));
           setCurrentLesson(JSON.parse(savedLesson));
           setView('player');
-        }
-      }
+        } 
+      }   */
     } else {
       setLoading(false);
     }

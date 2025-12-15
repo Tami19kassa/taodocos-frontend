@@ -50,7 +50,7 @@ export default function PaymentModal({ isOpen, onClose, level, settings }) {
             <p className="text-xs text-stone-500 uppercase tracking-widest mb-2">Total Amount</p>
             <div className="flex justify-center items-baseline gap-1">
               <span className="text-4xl font-bold text-white font-mono">{level.price}</span>
-              <span className="text-sm text-stone-400 font-bold">ETB</span>
+              <span className="text-sm text-stone-400 font-bold">$</span>
             </div>
           </div>
 

@@ -11,7 +11,6 @@ export default function Hero({ landing }) {
   const title = landing?.hero_title || "The Ancient Harp";
   const subtitle = landing?.hero_subtitle || "Master the sacred sounds.";
   
-  // FIX: Handle Cloudinary vs Local URLs
   const rawUrl = landing?.hero_background?.url;
   const bgImage = rawUrl 
     ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`)
@@ -20,42 +19,40 @@ export default function Hero({ landing }) {
   return (
     <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
       
-      {/* DYNAMIC BACKGROUND */}
+      {/* BACKGROUND */}
       {bgImage ? (
         <div className="absolute inset-0 z-0">
-          <img 
-            src={bgImage} 
-            alt="Hero Background" 
-            className="w-full h-full object-cover object-top opacity-40" 
-          />
-          {/* Gradient Overlay (Warm/Dark) */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#120a05] via-[#120a05]/80 to-transparent" />
+          <img src={bgImage} alt="Hero Background" className="w-full h-full object-cover object-top opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-[#0c0a09]/60 to-transparent" />
         </div>
       ) : (
-        // Fallback Gradient
         <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-[#120a05] z-0" />
       )}
 
-      {/* Glow Effects (Golden) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl bg-amber-600/10 blur-[120px] rounded-full pointer-events-none opacity-50 z-0" />
-      
-      <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="z-10 relative max-w-4xl">
+      {/* CONTENT */}
+      <motion.div 
+        initial="hidden" 
+        animate="visible" 
+        variants={fadeInUp} 
+        className="z-10 relative max-w-4xl flex flex-col items-center"
+      >
         
-        <span className="inline-block py-1 px-3 rounded-full bg-amber-900/30 border border-amber-500/20 text-amber-500 text-xs font-bold tracking-widest mb-6 backdrop-blur-md uppercase">
+        <span className="inline-block py-1.5 px-4 rounded-full bg-amber-900/40 border border-amber-500/20 text-amber-500 text-[10px] md:text-xs font-bold tracking-widest mb-6 backdrop-blur-md uppercase">
           Premium Begena Learning
         </span>
 
-        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight font-cinzel drop-shadow-xl">
+        {/* Responsive Font Size: Smaller on mobile, Huge on desktop */}
+        <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-white mb-6 leading-tight tracking-tight font-cinzel drop-shadow-xl">
           {title}
         </h1>
         
-        <p className="text-lg text-stone-300 mb-10 max-w-xl mx-auto leading-relaxed font-light font-serif">
+        <p className="text-base sm:text-lg md:text-xl text-stone-300 mb-8 max-w-lg md:max-w-2xl mx-auto leading-relaxed font-light font-serif px-4">
           {subtitle}
         </p>
 
         <button 
           onClick={() => document.getElementById('levels').scrollIntoView({ behavior: 'smooth' })} 
-          className="px-8 py-4 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_-5px_rgba(217,119,6,0.3)] uppercase tracking-widest text-sm"
+          className="px-8 py-4 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-full hover:scale-105 transition-transform shadow-lg shadow-amber-900/30 uppercase tracking-widest text-xs md:text-sm"
         >
           Start Learning Now
         </button>

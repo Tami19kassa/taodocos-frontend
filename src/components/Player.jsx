@@ -116,7 +116,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                        <FileText className="text-amber-600" size={20} />
                        <h3 className="font-bold text-stone-300 text-sm tracking-widest uppercase">Lyrics & Notes</h3>
                      </div>
-                     <div className="font-serif text-xl text-stone-300 leading-loose whitespace-pre-wrap">
+                    <div className="font-serif text-base md:text-lg text-stone-300 leading-loose whitespace-pre-wrap">
                        {renderBlockText(currentLesson.lyrics)}
                      </div>
                    </div>
