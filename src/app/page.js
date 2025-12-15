@@ -257,7 +257,12 @@ export default function Home() {
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            <AudioGallery audios={data.audios} onFolderClick={handleAudioFolderClick} />
+            
+            <AudioGallery 
+              audios={data.audios} 
+              onFolderClick={handleAudioFolderClick} 
+              userOwnedLevels={data.userOwnedLevels} // <--- ADD THIS PROP
+            />
             <Library books={data.books} />
             <StudentShowcase performances={data.performances} />
             <Testimonials testimonials={data.testimonials} />
