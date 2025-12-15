@@ -38,7 +38,7 @@ export default function Hero({ landing }) {
       >
         
         <span className="inline-block py-1.5 px-4 rounded-full bg-amber-900/40 border border-amber-500/20 text-amber-500 text-[10px] md:text-xs font-bold tracking-widest mb-6 backdrop-blur-md uppercase">
-          Premium Begena Learning
+          Taodocos Begena Learning
         </span>
 
         {/* Responsive Font Size: Smaller on mobile, Huge on desktop */}
