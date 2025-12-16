@@ -95,7 +95,8 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json()),
-        fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()) 
+        fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()) ,
+        fetch(`${STRAPI_URL}/api/payment-methods?populate=*`).then(r=>r.json()) 
       ]);
 
       const getVal = (res) => res.status === 'fulfilled' ? res.value.data : [];
@@ -110,7 +111,8 @@ export default function Home() {
         testimonials: getVal(results[5]) || [],
         settings: getVal(results[6]) || null,
         audios: getVal(results[7]) || [],
-        performances: getVal(results[8]) || []
+        performances: getVal(results[8]) || [],
+         paymentMethods: getVal(results[9]) || [] 
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -299,7 +301,8 @@ export default function Home() {
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
         level={selectedLevel} 
-        settings={data.settings}  
+        settings={data.settings} 
+        paymentMethods={data.paymentMethods}  
       />
     </main>
   );
