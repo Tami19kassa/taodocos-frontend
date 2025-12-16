@@ -44,7 +44,7 @@ export default function PaymentModal({ isOpen, onClose, level, settings, payment
             <div className="mt-4 inline-block bg-[#0c0a09] border border-amber-500/20 px-6 py-2 rounded-lg">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-white font-mono">{level.price}</span>
-                <span className="text-xs text-stone-400 font-bold">ETB</span>
+                <span className="text-xs text-stone-400 font-bold">$</span>
               </div>
             </div>
           </div>
