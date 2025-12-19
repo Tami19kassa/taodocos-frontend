@@ -17,12 +17,21 @@ export default function Hero({ landing }) {
     : null;
 
   return (
-   <section className="relative min-h-screen flex flex-col justify-start md:justify-center items-center text-center px-4 pt-32 md:pt-0 overflow-hidden">
+   // CHANGED: min-h-screen -> h-[100dvh] to force full viewport height
+   // CHANGED: Added 'w-full'
+   <section className="relative h-[100dvh] w-full flex flex-col justify-center items-center text-center px-4 overflow-hidden">
+      
       {/* BACKGROUND */}
       {bgImage ? (
         <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Hero Background" className="w-full h-full object-cover object-top opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-[#0c0a09]/60 to-transparent" />
+          <img 
+            src={bgImage} 
+            alt="Hero Background" 
+            // CHANGED: Ensure it covers perfectly without distortion
+            className="w-full h-full object-cover object-center" 
+          />
+          {/* Enhanced Gradient for readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-[#0c0a09]/40 to-black/30" />
         </div>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-[#120a05] z-0" />
@@ -33,14 +42,13 @@ export default function Hero({ landing }) {
         initial="hidden" 
         animate="visible" 
         variants={fadeInUp} 
-        className="z-10 relative max-w-4xl flex flex-col items-center"
+        className="z-10 relative max-w-4xl flex flex-col items-center mt-16 md:mt-0"
       >
         
         <span className="inline-block py-1.5 px-4 rounded-full bg-amber-900/40 border border-amber-500/20 text-amber-500 text-[10px] md:text-xs font-bold tracking-widest mb-6 backdrop-blur-md uppercase">
           Taodocos Begena Learning
         </span>
 
-        {/* Responsive Font Size: Smaller on mobile, Huge on desktop */}
         <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-white mb-6 leading-tight tracking-tight font-cinzel drop-shadow-xl">
           {title}
         </h1>

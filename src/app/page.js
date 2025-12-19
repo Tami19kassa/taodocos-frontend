@@ -52,18 +52,15 @@ export default function Home() {
       setUser(parsedUser);
       fetchUserData(storedToken, parsedUser.id);
       
-      // --- FIX: RESTORE CORRECT VIEW ---
-      const lastView = localStorage.getItem('last_view'); // Check which page we were on
+      const lastView = localStorage.getItem('last_view');
 
       if (lastView === 'audio_player') {
-        // Restore Audio Session
         const savedFolder = localStorage.getItem('last_audio_folder');
         if (savedFolder) {
           setSelectedAudioFolder(JSON.parse(savedFolder));
           setView('audio_player');
         }
       } else if (lastView === 'player') {
-        // Restore Course Session
         const savedLevel = localStorage.getItem('last_level');
         const savedLesson = localStorage.getItem('last_lesson');
         if (savedLevel && savedLesson) {
@@ -82,12 +79,11 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [view]);
 
-  // 2. DATA FETCHING (Same as before)
+  // 2. DATA FETCHING
   const fetchPublicData = async () => {
     try {
       const results = await Promise.allSettled([
          fetch(`${STRAPI_URL}/api/levels?populate=*&sort=rank:asc`).then(r=>r.json()), 
-        
         fetch(`${STRAPI_URL}/api/books?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`).then(r=>r.json()),
@@ -112,14 +108,12 @@ export default function Home() {
         settings: getVal(results[6]) || null,
         audios: getVal(results[7]) || [],
         performances: getVal(results[8]) || [],
-         paymentMethods: getVal(results[9]) || [] 
+        paymentMethods: getVal(results[9]) || [] 
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
     }
   };
-
-  
 
   const fetchUserData = async (token, userId) => {
     try {
@@ -132,12 +126,9 @@ export default function Home() {
       setLoading(false);
     } catch (e) { console.error(e); setLoading(false); }
   };
-
-
   
   // 3. HANDLERS
   const handleAuth = async (formData, isRegistering) => {
-    // ... (Auth Logic Same as before)
     setAuthError('');
     setLoading(true);
     const endpoint = isRegistering ? '/api/auth/local/register' : '/api/auth/local';
@@ -173,17 +164,14 @@ export default function Home() {
 
   const handleExitPlayer = () => {
     setView('home');
-    localStorage.removeItem('last_view'); // Clear view state
+    localStorage.removeItem('last_view');
     localStorage.removeItem('last_level');
     localStorage.removeItem('last_audio_folder');
   };
 
-  // --- FIX: SAVE AUDIO STATE ---
   const handleAudioFolderClick = (folder) => {
     setSelectedAudioFolder(folder);
     setView('audio_player');
-    
-    // Save to LocalStorage
     localStorage.setItem('last_view', 'audio_player');
     localStorage.setItem('last_audio_folder', JSON.stringify(folder));
   };
@@ -221,8 +209,6 @@ export default function Home() {
       setSelectedLevel({ ...level, lessons: lessons });
       setCurrentLesson(initialLesson);
       setView('player');
-
-      // Save Course State
       localStorage.setItem('last_view', 'player');
       localStorage.setItem('last_level', JSON.stringify({ ...level, lessons: lessons }));
       localStorage.setItem('last_lesson', JSON.stringify(initialLesson));
@@ -247,7 +233,6 @@ export default function Home() {
         {globalBgUrl ? (
           <img 
             src={globalBgUrl} 
-            // FIX: Changed object-cover to object-center (Better overall fit)
             className="w-full h-full object-cover object-center opacity-20" 
           />
         ) : (
@@ -255,13 +240,15 @@ export default function Home() {
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
-<div className={view === 'audio_player' ? 'hidden md:block' : 'block'}>
+
+      <div className={view === 'audio_player' ? 'hidden md:block' : 'block'}>
         <Navbar user={user} onLogout={handleLogout} setView={setView} />
       </div>
        
       <div className="flex-grow relative z-10">
         {view === 'home' && (
-          <div className="pt-16">
+          // CHANGED: Removed 'pt-16'. Now the Hero can touch the top edge behind the navbar.
+          <div className="">
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
@@ -269,7 +256,7 @@ export default function Home() {
             <AudioGallery 
               audios={data.audios} 
               onFolderClick={handleAudioFolderClick} 
-              userOwnedLevels={data.userOwnedLevels} // <--- ADD THIS PROP
+              userOwnedLevels={data.userOwnedLevels}
             />
             <Library books={data.books} />
             <StudentShowcase performances={data.performances} />
@@ -279,27 +266,29 @@ export default function Home() {
         )}
 
         {view === 'player' && (
-          <Player 
-            currentLesson={currentLesson} 
-            selectedLevel={selectedLevel} 
-            setCurrentLesson={setCurrentLesson} 
-            isLevelUnlocked={isUnlocked(selectedLevel)}
-            jwt={jwt} 
-            user={user} 
-            onUnlockRequest={() => setModalOpen(true)}
-            onExit={handleExitPlayer}
-          />
+          // Kept padding for player view so content isn't hidden
+          <div className="pt-20"> 
+            <Player 
+              currentLesson={currentLesson} 
+              selectedLevel={selectedLevel} 
+              setCurrentLesson={setCurrentLesson} 
+              isLevelUnlocked={isUnlocked(selectedLevel)}
+              jwt={jwt} 
+              user={user} 
+              onUnlockRequest={() => setModalOpen(true)}
+              onExit={handleExitPlayer}
+            />
+          </div>
         )}
 
         {view === 'audio_player' && (
           <AudioPlayerView 
              folder={selectedAudioFolder}
-             onExit={handleExitPlayer} // Use the standard exit handler
+             onExit={handleExitPlayer} 
           />
         )}
       </div>
 
-      {/* Only show Footer on Home */}
       {view === 'home' && <Footer settings={data.settings} />}
 
       <PaymentModal 
