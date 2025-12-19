@@ -1,4 +1,4 @@
-// --- FIX: Added AnimatePresence to imports ---
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, LogOut, Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
@@ -12,13 +12,14 @@ export default function Navbar({ user, onLogout, setView }) {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // ALL LINKS INCLUDED
   const navLinks = [
     { name: 'Levels', id: 'levels' },
     { name: 'Hymns', id: 'audio-gallery' },
     { name: 'Library', id: 'library' },
-    { name: 'Gallery', id: 'student-showcase' }, 
+    { name: 'Gallery', id: 'student-showcase' }, // Added
     { name: 'Voices', id: 'testimonials' },
-    { name: 'Master', id: 'teacher-bio' }, 
+    { name: 'Master', id: 'teacher-bio' }, // Added
   ];
 
   return (
@@ -26,7 +27,7 @@ export default function Navbar({ user, onLogout, setView }) {
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#120a05]/95 backdrop-blur-xl border-b border-amber-900/30 h-16 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           
-          {/* LEFT: LOGO */}
+          {/* LOGO */}
           <div className="flex items-center gap-3 cursor-pointer z-50" onClick={() => setView('home')}>
             <div className="w-8 h-8 bg-amber-700 rounded-full flex items-center justify-center shadow-lg border border-amber-500/30">
               <Music className="text-white w-4 h-4" />
@@ -36,7 +37,7 @@ export default function Navbar({ user, onLogout, setView }) {
             </span>
           </div>
           
-          {/* CENTER: DESKTOP LINKS */}
+          {/* CENTER: DESKTOP LINKS (Now includes ALL tags) */}
           <div className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
             <button onClick={() => setView('home')} className="text-xs font-medium text-stone-300 hover:text-white transition-colors uppercase tracking-wide">
               Sanctuary
@@ -70,7 +71,7 @@ export default function Navbar({ user, onLogout, setView }) {
         </div>
       </nav>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU (Reduced list for mobile to fit screen if needed, or keep all) */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
