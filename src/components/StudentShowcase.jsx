@@ -10,7 +10,7 @@ export default function StudentShowcase({ performances }) {
   if (!performances || performances.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-[#0c0a09]">
+    <section id="student-showcase" className="py-24 px-4 bg-[#0c0a09]">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-12">
           <div>

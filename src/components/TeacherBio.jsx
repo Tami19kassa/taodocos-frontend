@@ -13,10 +13,10 @@ export default function TeacherBio({ teacher }) {
     : null;
 
   return (
-    <section className="py-24 px-4 relative overflow-hidden bg-[#120a05]">
+    <section id="teacher-bio" className="py-24 px-4 relative overflow-hidden bg-[#120a05]">
       
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-b from-[#1a0f0a] to-[#120a05] -z-10 opacity-50" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-linear-to-b from-[#1a0f0a] to-[#120a05] -z-10 opacity-50" />
 
       <div className="max-w-6xl mx-auto flex flex-col-reverse md:flex-row items-center gap-16 md:gap-24">
         

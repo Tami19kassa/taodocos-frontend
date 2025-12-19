@@ -252,11 +252,13 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
 
-      <Navbar user={user} onLogout={handleLogout} setView={setView} />
+       {view !== 'audio_player' && (
+        <Navbar user={user} onLogout={handleLogout} setView={setView} />
+      )}
       
       <div className="flex-grow relative z-10">
         {view === 'home' && (
-          <>
+          <div className="pt-16">
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
@@ -270,7 +272,7 @@ export default function Home() {
             <StudentShowcase performances={data.performances} />
             <Testimonials testimonials={data.testimonials} />
             <TeacherBio teacher={data.teacher} />
-          </>
+          </div>
         )}
 
         {view === 'player' && (
