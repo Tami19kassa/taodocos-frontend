@@ -17,49 +17,48 @@ export default function Hero({ landing }) {
     : null;
 
   return (
-   // CHANGED: min-h-screen -> h-[100dvh] to force full viewport height
-   // CHANGED: Added 'w-full'
    <section className="relative h-[100dvh] w-full flex flex-col justify-center items-center text-center px-4 overflow-hidden">
       
-      {/* BACKGROUND */}
+      {/* BACKGROUND IMAGE */}
       {bgImage ? (
         <div className="absolute inset-0 z-0">
           <img 
             src={bgImage} 
             alt="Hero Background" 
-            // CHANGED: Ensure it covers perfectly without distortion
             className="w-full h-full object-cover object-center" 
           />
-          {/* Enhanced Gradient for readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-[#0c0a09]/40 to-black/30" />
+          {/* UPDATED: Darker overlay for better text contrast */}
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-transparent to-black/40" />
         </div>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-[#120a05] z-0" />
       )}
 
-      {/* CONTENT */}
+      {/* CONTENT - Now inside a Glass Card for maximum readability */}
       <motion.div 
         initial="hidden" 
         animate="visible" 
         variants={fadeInUp} 
-        className="z-10 relative max-w-4xl flex flex-col items-center mt-16 md:mt-0"
+        className="z-10 relative max-w-4xl flex flex-col items-center mt-16 md:mt-0 p-8 md:p-12 rounded-3xl bg-black/40 backdrop-blur-sm border border-white/10 shadow-2xl"
       >
         
-        <span className="inline-block py-1.5 px-4 rounded-full bg-amber-900/40 border border-amber-500/20 text-amber-500 text-[10px] md:text-xs font-bold tracking-widest mb-6 backdrop-blur-md uppercase">
+        <span className="inline-block py-1.5 px-4 rounded-full bg-amber-900/60 border border-amber-500/30 text-amber-400 text-[10px] md:text-xs font-bold tracking-widest mb-6 uppercase shadow-lg">
           Taodocos Begena Learning
         </span>
 
-        <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-white mb-6 leading-tight tracking-tight font-cinzel drop-shadow-xl">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight font-cinzel drop-shadow-2xl">
           {title}
         </h1>
         
-        <p className="text-base sm:text-lg md:text-xl text-stone-300 mb-8 max-w-lg md:max-w-2xl mx-auto leading-relaxed font-light font-serif px-4">
+        {/* UPDATED: Added drop-shadow to paragraph for clarity against white clothing */}
+        <p className="text-base sm:text-lg md:text-xl text-stone-200 mb-8 max-w-lg md:max-w-2xl mx-auto leading-relaxed font-serif px-4 drop-shadow-lg font-medium">
           {subtitle}
         </p>
 
         <button 
           onClick={() => document.getElementById('levels').scrollIntoView({ behavior: 'smooth' })} 
-          className="px-8 py-4 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-full hover:scale-105 transition-transform shadow-lg shadow-amber-900/30 uppercase tracking-widest text-xs md:text-sm"
+          className="px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(217,119,6,0.4)] uppercase tracking-widest text-xs md:text-sm border border-amber-400/20"
         >
           Start Learning Now
         </button>
