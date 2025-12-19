@@ -17,8 +17,7 @@ export default function Hero({ landing }) {
     : null;
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
-      
+   <section className="relative min-h-screen flex flex-col justify-start md:justify-center items-center text-center px-4 pt-32 md:pt-0 overflow-hidden">
       {/* BACKGROUND */}
       {bgImage ? (
         <div className="absolute inset-0 z-0">

@@ -245,13 +245,16 @@ export default function Home() {
     <main className="min-h-screen relative">
       <div className="fixed inset-0 z-[-1]">
         {globalBgUrl ? (
-          <img src={globalBgUrl} className="w-full h-full object-cover opacity-20" />
+          <img 
+            src={globalBgUrl} 
+            // FIX: Changed object-cover to object-center (Better overall fit)
+            className="w-full h-full object-cover object-center opacity-20" 
+          />
         ) : (
           <div className="w-full h-full bg-[#1a0f0a]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
-
 <div className={view === 'audio_player' ? 'hidden md:block' : 'block'}>
         <Navbar user={user} onLogout={handleLogout} setView={setView} />
       </div>
