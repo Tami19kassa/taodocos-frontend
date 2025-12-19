@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, ChevronLeft, SkipBack, SkipForward, Music, Heart, MoreHorizontal } from 'lucide-react';
+import { 
+  Play, Pause, ChevronDown, SkipBack, SkipForward, 
+  Music, Heart, MoreHorizontal, Shuffle, Repeat, ListMusic 
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -12,9 +15,11 @@ export default function AudioPlayerView({ folder, onExit }) {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
+  const [showPlaylist, setShowPlaylist] = useState(false); // Toggle for mobile playlist view
   
   const audioRef = useRef(null);
 
+  // --- LOGIC SECTION (Unchanged) ---
   useEffect(() => {
     if (!folder) return;
     const fetchTracks = async () => {
@@ -85,127 +90,230 @@ export default function AudioPlayerView({ folder, onExit }) {
   const activeCover = getCover(currentTrack);
   const activeAudioUrl = getAudioUrl(currentTrack);
 
+  // --- CIRCULAR PROGRESS MATH ---
+  const radius = 120; // Size of the circle
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
+
+  // Calculate knob position (simple trigonometry)
+  const angle = ((progress || 0) / 100) * 360;
+  const radians = (angle - 90) * (Math.PI / 180); // -90 to start at top
+  const knobX = 140 + radius * Math.cos(radians); // 140 is half of SVG width (280)
+  const knobY = 140 + radius * Math.sin(radians);
+
   return (
-    <div className="fixed inset-0 z-[200] bg-[#120a05] flex flex-col md:flex-row overflow-hidden h-[100dvh]">
+    <div className="fixed inset-0 z-[200] bg-[#1a100a] text-stone-200 flex flex-col md:flex-row overflow-hidden font-sans">
       
-      {/* Background Blur */}
-      <div className="absolute inset-0 z-0">
+      {/* Background Gradient/Blur */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {activeCover && (
           <img 
             src={activeCover} 
-            className="w-full h-full object-cover opacity-30 blur-[80px] scale-110 transition-all duration-1000"
+            className="w-full h-full object-cover opacity-20 blur-[100px] scale-125"
           />
         )}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a100a]/80 via-[#1a100a]/90 to-[#120805]" />
       </div>
 
-      {/* --- PLAYER CONTROLS --- */}
-      <div className="relative z-20 w-full md:w-1/2 h-[55%] md:h-full bg-black/20 backdrop-blur-xl flex flex-col justify-center items-center px-6 pt-28 pb-6 md:p-12 order-1 md:order-2 border-b md:border-b-0 md:border-l border-white/10">
+      {/* --- MAIN PLAYER AREA (Styled like the Center Phone Image) --- */}
+      <div className={`relative z-20 w-full ${showPlaylist ? 'hidden md:flex' : 'flex'} md:w-1/2 h-full flex-col justify-between p-6 py-10 md:p-12 items-center`}>
         
-        <button onClick={onExit} className="absolute top-24 left-4 md:hidden flex items-center gap-2 text-stone-400 bg-black/40 px-3 py-1.5 rounded-full text-xs z-30">
-          <ChevronLeft size={14} /> Back
-        </button>
+        {/* Header */}
+        <div className="w-full flex justify-between items-center mb-4">
+          <button onClick={onExit} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+            <ChevronDown size={20} className="text-stone-300" />
+          </button>
+          <span className="text-xs uppercase tracking-widest text-stone-500 font-medium">Playing Now</span>
+          <button className="p-2">
+            <MoreHorizontal size={20} className="text-stone-300" />
+          </button>
+        </div>
 
         {currentTrack ? (
-          <div className="w-full max-w-md flex flex-col items-center">
+          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
             
-            {/* Album Art */}
-            <motion.div 
-              key={currentTrack.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="aspect-square w-40 h-40 sm:w-56 sm:h-56 md:w-full md:max-w-xs rounded-xl overflow-hidden shadow-2xl border border-white/10 mb-6 bg-[#0c0a09]"
-            >
-              {activeCover ? (
-                <img src={activeCover} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Music size={40} className="text-stone-700" />
-                </div>
-              )}
-            </motion.div>
-
-            {/* Info */}
-            <div className="text-center mb-6 w-full">
-              <h2 className="text-lg md:text-3xl font-bold text-white mb-1 line-clamp-1 font-cinzel">{currentTrack.title}</h2>
-              <p className="text-stone-400 text-xs md:text-sm">{folder.title}</p>
+            {/* Text Info (Top Center) */}
+            <div className="text-center mb-2">
+              <h2 className="text-2xl font-bold text-white mb-1 line-clamp-1 tracking-tight">{currentTrack.title}</h2>
+              <p className="text-amber-500/80 text-sm font-medium tracking-wide">{folder.title}</p>
             </div>
 
-            {/* Progress */}
-            <div className="w-full mb-6 group">
+            {/* Time Indicators (Centered above art) */}
+            <div className="flex items-center gap-2 text-[10px] text-stone-400 font-mono mb-6 tracking-widest">
+                <span>{currentTime}</span>
+                <span className="text-stone-600">|</span>
+                <span>{duration}</span>
+            </div>
+
+            {/* Circular Artwork & Progress */}
+            <div className="relative w-[280px] h-[280px] flex items-center justify-center mb-10">
+              
+              {/* SVG Ring */}
+              <svg className="absolute inset-0 w-full h-full rotate-0" viewBox="0 0 280 280">
+                {/* Track */}
+                <circle 
+                  cx="140" cy="140" r={radius} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  className="text-white/5"
+                />
+                {/* Progress */}
+                <circle 
+                  cx="140" cy="140" r={radius} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="3" 
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  className="text-amber-500 transition-all duration-300 ease-linear transform -rotate-90 origin-center"
+                />
+                {/* Knob Dot */}
+                <circle 
+                  cx={knobX} cy={knobY} r="6" 
+                  className="fill-amber-200 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] transition-all duration-300 ease-linear"
+                />
+              </svg>
+
+              {/* Artwork Image (Masked Circle) */}
+              <motion.div 
+                key={currentTrack.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-[210px] h-[210px] rounded-full overflow-hidden shadow-2xl z-10 border-4 border-[#1a100a]"
+              >
+                {activeCover ? (
+                  <img src={activeCover} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-stone-900 flex items-center justify-center">
+                    <Music size={50} className="text-stone-700" />
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Hidden Range Input for Scrubbing (Preserves Logic) */}
               <input 
                 type="range" min="0" max="100" value={progress}
-                onChange={(e) => { if(audioRef.current) { audioRef.current.currentTime = (e.target.value/100) * audioRef.current.duration; setProgress(e.target.value); }}}
-                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-600"
+                onChange={(e) => { 
+                  if(audioRef.current) { 
+                    audioRef.current.currentTime = (e.target.value/100) * audioRef.current.duration; 
+                    setProgress(e.target.value); 
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 rounded-full"
+                title="Seek"
               />
-              <div className="flex justify-between text-[10px] text-stone-500 mt-2 font-mono">
-                <span>{currentTime}</span><span>{duration}</span>
-              </div>
             </div>
 
-            {/* Controls (Fixed Responsive Size) */}
-            <div className="flex items-center gap-8 md:gap-10">
-               <button onClick={handlePrev} className="text-stone-300 hover:text-amber-500">
-                  <SkipBack size={28} />
-               </button>
-               
-               <button onClick={() => setIsPlaying(!isPlaying)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-amber-600 text-black flex items-center justify-center shadow-lg shadow-amber-900/40">
-                 {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-1" />}
-               </button>
-               
-               <button onClick={handleNext} className="text-stone-300 hover:text-amber-500">
-                  <SkipForward size={28} />
-               </button>
+            {/* Controls */}
+            <div className="w-full flex items-center justify-between px-2">
+              <button className="text-stone-500 hover:text-stone-300 transition-colors">
+                <Shuffle size={20} />
+              </button>
+
+              <div className="flex items-center gap-6">
+                 <button onClick={handlePrev} className="text-stone-300 hover:text-white transition-colors">
+                    <SkipBack size={26} />
+                 </button>
+                 
+                 <button 
+                  onClick={() => setIsPlaying(!isPlaying)} 
+                  className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform shadow-lg shadow-white/10"
+                >
+                   {isPlaying ? <Pause size={28} fill="black" /> : <Play size={28} fill="black" className="ml-1" />}
+                 </button>
+                 
+                 <button onClick={handleNext} className="text-stone-300 hover:text-white transition-colors">
+                    <SkipForward size={26} />
+                 </button>
+              </div>
+
+              <button className="text-stone-500 hover:text-amber-500 transition-colors">
+                <Heart size={20} />
+              </button>
+            </div>
+
+            {/* Bottom Utility Row */}
+            <div className="w-full flex justify-between items-center mt-12 px-6">
+                <button className="text-stone-600 hover:text-stone-400">
+                    <Repeat size={18} />
+                </button>
+                <button 
+                  onClick={() => setShowPlaylist(true)} 
+                  className="flex flex-col items-center gap-1 text-amber-600 md:hidden"
+                >
+                    <ListMusic size={20} />
+                    <span className="text-[10px] uppercase font-bold">Playlist</span>
+                </button>
+                {/* Desktop placeholder for symmetry */}
+                <div className="hidden md:block w-5"></div> 
+                <button className="text-stone-600 hover:text-stone-400">
+                    <MoreHorizontal size={18} />
+                </button>
             </div>
 
             <audio ref={audioRef} src={activeAudioUrl} onTimeUpdate={handleTimeUpdate} onEnded={handleNext} onLoadedMetadata={handleTimeUpdate} />
           </div>
         ) : (
-          <p className="text-stone-500">Select a hymn...</p>
+          <p className="text-stone-500 animate-pulse">Loading tracks...</p>
         )}
       </div>
 
-      {/* --- PLAYLIST --- */}
-      <div className="relative z-10 w-full md:w-1/2 h-[45%] md:h-full p-4 md:p-12 overflow-y-auto custom-scrollbar flex flex-col order-2 md:order-1 bg-[#120a05]/80">
+      {/* --- PLAYLIST SIDEBAR (Hidden on mobile unless toggled, Visible on Desktop) --- */}
+      <div className={`
+        absolute inset-0 z-30 bg-[#120805]/95 backdrop-blur-xl md:relative md:bg-transparent md:backdrop-blur-none 
+        md:w-1/2 h-full flex flex-col border-l border-white/5 transition-transform duration-300
+        ${showPlaylist ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+      `}>
         
-        <button onClick={onExit} className="hidden md:flex items-center gap-2 text-stone-400 hover:text-amber-500 mb-8 w-fit transition-colors group">
-          <ChevronLeft className="group-hover:-translate-x-1 transition-transform" /> Back to Sanctuary
-        </button>
+        <div className="p-6 md:p-12 h-full overflow-y-auto custom-scrollbar">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-2xl font-serif text-white mb-1">{folder.title}</h2>
+              <p className="text-stone-500 text-sm">{tracks.length} Tracks</p>
+            </div>
+            <button onClick={() => setShowPlaylist(false)} className="md:hidden p-2 bg-white/10 rounded-full">
+              <ChevronDown size={20} />
+            </button>
+          </div>
 
-        <h2 className="font-cinzel text-xl md:text-4xl text-white mb-2 hidden md:block">{folder.title}</h2>
-        <p className="text-stone-500 text-xs md:text-sm mb-4 md:mb-8">{tracks.length} Hymns</p>
-
-        <div className="space-y-2 pb-20 md:pb-0">
-          {tracks.slice(0, visibleCount).map((track, index) => {
-            const isActive = currentTrack?.id === track.id;
-            return (
-              <div 
-                key={track.id}
-                onClick={() => playTrack(track)}
-                className={`p-3 md:p-4 rounded-xl flex items-center gap-4 cursor-pointer transition-all border ${
-                  isActive 
-                    ? 'bg-amber-900/20 border-amber-600/40' 
-                    : 'bg-transparent border-transparent hover:bg-white/5'
-                }`}
-              >
-                <div className={`font-mono text-xs w-4 md:w-6 ${isActive ? 'text-amber-500' : 'text-stone-600'}`}>{index + 1}</div>
-                <div className="flex-1">
-                  <h4 className={`font-medium text-sm md:text-base line-clamp-1 ${isActive ? 'text-amber-100' : 'text-stone-300'}`}>{track.title}</h4>
-                </div>
-                {isActive && (
-                  <div className="flex gap-0.5 h-3 items-end">
-                     <div className="w-0.5 bg-amber-500 animate-bounce" />
-                     <div className="w-0.5 bg-amber-500 animate-bounce delay-75" />
-                     <div className="w-0.5 bg-amber-500 animate-bounce delay-150" />
+          <div className="space-y-1">
+            {tracks.slice(0, visibleCount).map((track, index) => {
+              const isActive = currentTrack?.id === track.id;
+              return (
+                <div 
+                  key={track.id}
+                  onClick={() => { playTrack(track); setShowPlaylist(false); }}
+                  className={`p-4 rounded-xl flex items-center gap-4 cursor-pointer group transition-all ${
+                    isActive ? 'bg-amber-500/10' : 'hover:bg-white/5'
+                  }`}
+                >
+                  <div className={`w-8 text-center text-sm font-medium ${isActive ? 'text-amber-500' : 'text-stone-600'}`}>
+                    {index + 1}
                   </div>
-                )}
-              </div>
-            );
-          })}
-          
-          {visibleCount < tracks.length && (
-            <button onClick={() => setVisibleCount(prev => prev + 10)} className="mt-4 py-3 w-full text-xs text-stone-500 uppercase tracking-widest bg-white/5 rounded-lg">Load More</button>
-          )}
+                  <div className="flex-1">
+                    <h4 className={`text-sm font-medium ${isActive ? 'text-white' : 'text-stone-300 group-hover:text-white'}`}>
+                      {track.title}
+                    </h4>
+                  </div>
+                  {isActive && (
+                    <div className="flex gap-1 h-3 items-end">
+                       <div className="w-0.5 h-full bg-amber-500 animate-[bounce_1s_infinite]" />
+                       <div className="w-0.5 h-2/3 bg-amber-500 animate-[bounce_1.1s_infinite]" />
+                       <div className="w-0.5 h-1/2 bg-amber-500 animate-[bounce_1.2s_infinite]" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
+            {visibleCount < tracks.length && (
+              <button onClick={() => setVisibleCount(prev => prev + 10)} className="mt-6 w-full py-4 text-xs text-stone-500 hover:text-stone-300 uppercase tracking-widest">
+                Load More Tracks
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
