@@ -252,10 +252,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
 
-       {view !== 'audio_player' && (
+<div className={view === 'audio_player' ? 'hidden md:block' : 'block'}>
         <Navbar user={user} onLogout={handleLogout} setView={setView} />
-      )}
-      
+      </div>
+       
       <div className="flex-grow relative z-10">
         {view === 'home' && (
           <div className="pt-16">
