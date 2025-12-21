@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Play, Pause, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
-  Maximize, Lock, MoreVertical, ThumbsUp, ThumbsDown, 
-  Share2, Download, ListPlus, Bell, Cast, Settings, Subtitles, 
-  SkipBack, SkipForward, MessageSquare 
+  Play, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
+  Maximize, Lock, MoreVertical, ThumbsUp, Share2, Download, ListPlus, 
+  Cast, Settings, Subtitles, SkipBack, SkipForward, MessageSquare 
 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
 import CommentSection from './CommentSection';
@@ -13,7 +12,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   const [isLoading, setIsLoading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false); // New State for Collapsible Comments
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false); // Collapsible Discussion State
   const playerRef = useRef(null);
 
   // Safety Check
@@ -75,22 +74,28 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
         {/* --- BEAUTIFUL HEADER (Desktop) --- */}
         {!isFullScreen && (
           <div className="hidden md:flex justify-between items-center mb-8 px-4">
+            {/* ENHANCED BACK BUTTON */}
             <button 
               onClick={onExit} 
-              className="group relative flex items-center gap-4 pl-2 pr-6 py-2 rounded-full bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-amber-950/20 transition-all duration-300 backdrop-blur-md"
+              className="group relative flex items-center gap-4 pl-2 pr-6 py-2 rounded-full bg-white/5 border border-white/10 hover:border-amber-500/40 hover:bg-amber-950/30 transition-all duration-500 backdrop-blur-md overflow-hidden"
             >
-               <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center group-hover:bg-amber-600 transition-colors shadow-lg">
-                 <ChevronLeft size={16} className="text-stone-300 group-hover:text-white group-hover:-translate-x-0.5 transition-transform" />
+               {/* Hover Glow Effect */}
+               <div className="absolute inset-0 bg-gradient-to-r from-amber-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+               
+               <div className="relative z-10 w-9 h-9 rounded-full bg-stone-800 border border-white/5 flex items-center justify-center group-hover:bg-amber-700 group-hover:border-amber-500 transition-all duration-300 shadow-lg">
+                 <ChevronLeft size={18} className="text-stone-300 group-hover:text-white group-hover:-translate-x-0.5 transition-transform" />
                </div>
-               <div className="flex flex-col items-start">
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-stone-500 group-hover:text-amber-500/80 font-bold transition-colors">Return</span>
+               
+               <div className="relative z-10 flex flex-col items-start">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500 group-hover:text-amber-400 font-bold transition-colors">Return</span>
                   <span className="font-cinzel text-sm text-stone-300 group-hover:text-white tracking-wide">To Sanctuary</span>
                </div>
             </button>
 
-            {/* Optional: Add a subtle logo or level title on the right */}
-            <div className="text-right hidden lg:block">
-               <h2 className="text-xs font-bold text-stone-500 uppercase tracking-widest">{selectedLevel.title}</h2>
+            {/* Level Title Display */}
+            <div className="text-right hidden lg:block opacity-60 hover:opacity-100 transition-opacity">
+               <h2 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Current Chapter</h2>
+               <span className="font-serif text-amber-500/80">{selectedLevel.title}</span>
             </div>
           </div>
         )}
@@ -105,12 +110,12 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                
                {/* OVERLAY CONTROLS */}
                {!isPlaying || !isLessonPlayable ? (
-                 <div className="absolute inset-0 z-20 flex flex-col justify-between bg-black/40">
+                 <div className="absolute inset-0 z-20 flex flex-col justify-between bg-black/40 backdrop-blur-[2px]">
                    
                    {/* Top Bar */}
                    <div className="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
                      <button onClick={onExit} className="md:hidden text-white hover:text-amber-500"><ChevronLeft size={24} /></button>
-                     <div className="hidden md:block"></div> {/* Spacer */}
+                     <div className="hidden md:block"></div>
                      <div className="flex items-center gap-6 text-white opacity-80">
                         <Cast size={20} className="hover:text-amber-500 cursor-pointer" />
                         <Subtitles size={20} className="hover:text-amber-500 cursor-pointer" />
@@ -119,32 +124,32 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    </div>
 
                    {/* Center Play Button */}
-                   <div className="flex items-center justify-center gap-8 md:gap-12">
-                      <button onClick={handlePrev} className="text-white/50 hover:text-white transition-colors p-2"><SkipBack size={28} md:size={32} /></button>
+                   <div className="flex items-center justify-center gap-8 md:gap-16">
+                      <button onClick={handlePrev} className="text-white/50 hover:text-white transition-colors p-2 hover:scale-110"><SkipBack size={32} /></button>
                       
                       <button 
                         onClick={handlePlayClick}
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-amber-600 hover:border-amber-500 hover:scale-110 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                        className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-amber-600 hover:border-amber-500 hover:scale-110 transition-all duration-300 shadow-[0_0_40px_rgba(0,0,0,0.6)]"
                       >
-                         {isLoading ? <Loader2 className="animate-spin" /> : isLessonPlayable ? <Play fill="white" className="ml-1" size={32} /> : <Lock size={28} />}
+                         {isLoading ? <Loader2 className="animate-spin" /> : isLessonPlayable ? <Play fill="white" className="ml-2" size={36} /> : <Lock size={32} />}
                       </button>
 
-                      <button onClick={handleNext} className="text-white/50 hover:text-white transition-colors p-2"><SkipForward size={28} md:size={32} /></button>
+                      <button onClick={handleNext} className="text-white/50 hover:text-white transition-colors p-2 hover:scale-110"><SkipForward size={32} /></button>
                    </div>
 
                    {/* Bottom Bar */}
                    <div className="p-4 bg-gradient-to-t from-black/90 to-transparent flex justify-between items-end">
                       <div className="text-xs font-mono text-stone-300">
                          {!isLessonPlayable && <span className="bg-stone-800 text-stone-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mr-2 border border-white/10">Locked</span>}
-                         {isLessonPlayable ? "Ready to Play" : "Preview Mode"}
+                         {isLessonPlayable ? "Tap to Play" : "Preview Mode"}
                       </div>
                       <button onClick={toggleFullScreen} className="text-white hover:text-amber-500"><Maximize size={20} /></button>
                    </div>
 
-                   {/* Thumbnail Background */}
+                   {/* Background Thumbnail */}
                    <img 
                      src={`https://img.youtube.com/vi/${currentLesson.youtube_id}/maxresdefault.jpg`} 
-                     className="absolute inset-0 w-full h-full object-cover -z-10 opacity-50" 
+                     className="absolute inset-0 w-full h-full object-cover -z-10 opacity-50 transition-opacity group-hover:opacity-60" 
                    />
                  </div>
                ) : (
@@ -217,7 +222,6 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
 
                 {/* --- SHRINKABLE COMMENTS SECTION --- */}
                 <div className="mt-6 border-t border-white/5 pt-2">
-                   {/* Toggle Button */}
                    <button 
                      onClick={() => setIsCommentsOpen(!isCommentsOpen)} 
                      className="w-full flex items-center justify-between p-4 hover:bg-white/5 rounded-xl transition-colors group"
@@ -230,7 +234,6 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         <ChevronUp size={20} className="text-stone-500 group-hover:text-amber-500" />
                      ) : (
                         <div className="flex items-center gap-2">
-                           {/* Mini preview bubble */}
                            <div className="bg-white/10 px-2 py-1 rounded text-[10px] text-stone-400 font-mono">
                               <MessageSquare size={12} className="inline mr-1" /> Open
                            </div>
@@ -239,7 +242,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                      )}
                    </button>
 
-                   {/* Collapsible Content */}
+                   {/* Content */}
                    {isCommentsOpen && (
                       <div className="mt-2 animate-in slide-in-from-top-2 duration-300">
                          <CommentSection lessonId={currentLesson.id} jwt={jwt} user={user} />
@@ -251,11 +254,11 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
             )}
           </div>
           
-          {/* --- RIGHT COLUMN: PLAYLIST (Cleaned Up) --- */}
+          {/* --- RIGHT COLUMN: PLAYLIST --- */}
           {!isFullScreen && (
             <div className="w-full lg:w-[32%] px-4 md:px-0 pb-10">
               
-              {/* Clean Header - Removed Related/Recent tags */}
+              {/* Clean Header - No Tags */}
               <div className="flex justify-between items-end mb-4 mt-2 lg:mt-0 pb-2 border-b border-white/5">
                  <h3 className="font-cinzel text-xl text-stone-200">Up Next</h3>
                  <span className="text-xs text-stone-600 font-mono uppercase tracking-widest">
@@ -263,7 +266,6 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                  </span>
               </div>
 
-              {/* List */}
               <div className="flex flex-col gap-3">
                 {selectedLevel.lessons.map((lesson, idx) => {
                   const isPlayable = isLevelUnlocked || lesson.is_free_sample;
@@ -277,7 +279,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                           isActive ? 'bg-amber-900/20 border border-amber-500/20' : 'hover:bg-white/5 border border-transparent'
                       }`}
                     >
-                      {/* Thumbnail Left */}
+                      {/* Thumbnail */}
                       <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-black shadow-lg">
                         <img 
                           src={`https://img.youtube.com/vi/${lesson.youtube_id}/mqdefault.jpg`} 
@@ -295,7 +297,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         )}
                       </div>
 
-                      {/* Text Right */}
+                      {/* Info */}
                       <div className="flex flex-col flex-1 min-w-0 pt-0.5 justify-center">
                         <h4 className={`text-sm font-medium line-clamp-2 leading-snug mb-1 transition-colors ${
                             isActive ? 'text-amber-400' : 'text-stone-300 group-hover:text-white'
@@ -340,7 +342,6 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   );
 }
 
-// Helper Component
 function ActionButton({ icon, label }) {
    return (
       <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-stone-300 hover:text-white text-xs font-medium whitespace-nowrap transition-colors min-w-fit border border-white/5 hover:border-white/10">
