@@ -1,16 +1,16 @@
 
+
 import { useState, useRef, useEffect } from 'react';
 import { 
   Play, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
   Maximize, Lock, Cast, Settings, Subtitles, SkipBack, SkipForward, 
-  MessageSquare, ExternalLink, Youtube 
+  ExternalLink, Youtube 
 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
 import CommentSection from './CommentSection';
 
+
 const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@taodocostube6869"; 
-
-
 export default function Player({ currentLesson, selectedLevel, setCurrentLesson, onExit, isLevelUnlocked, onUnlockRequest }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,12 +77,10 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   };
 
   return (
-    // Reduced top padding (pt-20 -> pt-16) to pull everything up
     <div className={`transition-colors duration-700 ${isFullScreen ? 'bg-black' : 'pt-16 pb-12 px-0 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]'} text-stone-200`}>
         
         {/* --- HEADER --- */}
         {!isFullScreen && (
-          // Reduced bottom margin (mb-8 -> mb-4) to remove void space above video
           <div className="hidden md:flex justify-between items-center mb-4 px-4">
             <button 
               onClick={onExit} 
@@ -149,7 +147,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
             {!isFullScreen && (
               <div className="px-4 md:px-0 py-4 md:py-6 bg-[#120a05]">
                 
-                {/* Title & Chevron */}
+                {/* Title & Chevron (Cleaned up spacing) */}
                 <div className="flex justify-between items-start mb-6 cursor-pointer group" onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}>
                    <div className="flex-1 pr-4">
                       <h1 className="text-lg md:text-2xl font-medium text-stone-100 line-clamp-2 leading-snug font-sans group-hover:text-amber-500 transition-colors">{currentLesson.title}</h1>
@@ -164,9 +162,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    </div>
                 </div>
 
-                {/* --- REMOVED ACTION BUTTONS (Like, Share, etc.) HERE --- */}
-
-                {/* Channel Bar */}
+                {/* Channel Bar (Subscribe Button Included) */}
                 <div className="flex items-center justify-between mb-6 p-3 bg-white/5 rounded-full border border-white/5">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-700 to-stone-900 border border-amber-500/30 overflow-hidden flex items-center justify-center">
