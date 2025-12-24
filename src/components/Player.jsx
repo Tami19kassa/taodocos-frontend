@@ -2,17 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   Play, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
   Maximize, Lock, MoreVertical, ThumbsUp, Share2, Download, ListPlus, 
-  Cast, Settings, Subtitles, SkipBack, SkipForward, MessageSquare 
+  Cast, Settings, Subtitles, SkipBack, SkipForward, MessageSquare, ExternalLink, Youtube 
 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
-import CommentSection from './CommentSection';
 
-export default function Player({ currentLesson, selectedLevel, setCurrentLesson, onExit, isLevelUnlocked, jwt, user, onUnlockRequest }) {
+// Replace with your actual channel handle or ID
+const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@taodocostube6869"; 
+
+export default function Player({ currentLesson, selectedLevel, setCurrentLesson, onExit, isLevelUnlocked, onUnlockRequest }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false); // Collapsible Discussion State
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const playerRef = useRef(null);
 
   // Safety Check
@@ -52,6 +54,20 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
     }
   };
 
+  // --- NEW LOGIC: DIRECT TO YOUTUBE ---
+  const handleOpenYoutubeComments = () => {
+    if (currentLesson.youtube_id) {
+        // Deep link to the comment section of the specific video
+        window.open(`https://www.youtube.com/watch?v=${currentLesson.youtube_id}#comment-section`, '_blank');
+    }
+  };
+
+  const handleSubscribe = () => {
+    // Direct link to channel with subscribe confirmation
+    window.open(`${YOUTUBE_CHANNEL_URL}?sub_confirmation=1`, '_blank');
+  };
+  // ------------------------------------
+
   useEffect(() => {
     const handleFsChange = () => setIsFullScreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFsChange);
@@ -71,28 +87,22 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   return (
     <div className={`transition-colors duration-700 ${isFullScreen ? 'bg-black' : 'pt-20 md:pt-24 pb-12 px-0 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]'} text-stone-200`}>
         
-        {/* --- BEAUTIFUL HEADER (Desktop) --- */}
+        {/* --- HEADER --- */}
         {!isFullScreen && (
           <div className="hidden md:flex justify-between items-center mb-8 px-4">
-            {/* ENHANCED BACK BUTTON */}
             <button 
               onClick={onExit} 
               className="group relative flex items-center gap-4 pl-2 pr-6 py-2 rounded-full bg-white/5 border border-white/10 hover:border-amber-500/40 hover:bg-amber-950/30 transition-all duration-500 backdrop-blur-md overflow-hidden"
             >
-               {/* Hover Glow Effect */}
                <div className="absolute inset-0 bg-gradient-to-r from-amber-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-               
                <div className="relative z-10 w-9 h-9 rounded-full bg-stone-800 border border-white/5 flex items-center justify-center group-hover:bg-amber-700 group-hover:border-amber-500 transition-all duration-300 shadow-lg">
                  <ChevronLeft size={18} className="text-stone-300 group-hover:text-white group-hover:-translate-x-0.5 transition-transform" />
                </div>
-               
                <div className="relative z-10 flex flex-col items-start">
                   <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500 group-hover:text-amber-400 font-bold transition-colors">Return</span>
                   <span className="font-cinzel text-sm text-stone-300 group-hover:text-white tracking-wide">To Sanctuary</span>
                </div>
             </button>
-
-            {/* Level Title Display */}
             <div className="text-right hidden lg:block opacity-60 hover:opacity-100 transition-opacity">
                <h2 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Current Chapter</h2>
                <span className="font-serif text-amber-500/80">{selectedLevel.title}</span>
@@ -102,17 +112,13 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
 
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8">
           
-          {/* --- LEFT COLUMN: VIDEO & ACTIONS --- */}
+          {/* --- LEFT COLUMN --- */}
           <div className={`${isFullScreen ? 'w-full h-screen fixed top-0 left-0 z-[100] bg-black flex items-center justify-center' : 'w-full lg:w-[68%]'}`}>
             
-            {/* 1. VIDEO PLAYER CONTAINER */}
+            {/* VIDEO PLAYER */}
             <div ref={playerRef} className={`relative bg-black group w-full ${isFullScreen ? 'h-full' : 'aspect-video shadow-2xl rounded-none md:rounded-2xl overflow-hidden border-t md:border border-white/10'}`}>
-               
-               {/* OVERLAY CONTROLS */}
                {!isPlaying || !isLessonPlayable ? (
                  <div className="absolute inset-0 z-20 flex flex-col justify-between bg-black/40 backdrop-blur-[2px]">
-                   
-                   {/* Top Bar */}
                    <div className="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
                      <button onClick={onExit} className="md:hidden text-white hover:text-amber-500"><ChevronLeft size={24} /></button>
                      <div className="hidden md:block"></div>
@@ -122,61 +128,40 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         <Settings size={20} className="hover:text-amber-500 cursor-pointer" />
                      </div>
                    </div>
-
-                   {/* Center Play Button */}
                    <div className="flex items-center justify-center gap-8 md:gap-16">
                       <button onClick={handlePrev} className="text-white/50 hover:text-white transition-colors p-2 hover:scale-110"><SkipBack size={32} /></button>
-                      
                       <button 
                         onClick={handlePlayClick}
                         className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-amber-600 hover:border-amber-500 hover:scale-110 transition-all duration-300 shadow-[0_0_40px_rgba(0,0,0,0.6)]"
                       >
                          {isLoading ? <Loader2 className="animate-spin" /> : isLessonPlayable ? <Play fill="white" className="ml-2" size={36} /> : <Lock size={32} />}
                       </button>
-
                       <button onClick={handleNext} className="text-white/50 hover:text-white transition-colors p-2 hover:scale-110"><SkipForward size={32} /></button>
                    </div>
-
-                   {/* Bottom Bar */}
                    <div className="p-4 bg-gradient-to-t from-black/90 to-transparent flex justify-between items-end">
                       <div className="text-xs font-mono text-stone-300">
-                         {!isLessonPlayable && <span className="bg-stone-800 text-stone-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mr-2 border border-white/10">Locked</span>}
                          {isLessonPlayable ? "Tap to Play" : "Preview Mode"}
                       </div>
                       <button onClick={toggleFullScreen} className="text-white hover:text-amber-500"><Maximize size={20} /></button>
                    </div>
-
-                   {/* Background Thumbnail */}
-                   <img 
-                     src={`https://img.youtube.com/vi/${currentLesson.youtube_id}/maxresdefault.jpg`} 
-                     className="absolute inset-0 w-full h-full object-cover -z-10 opacity-50 transition-opacity group-hover:opacity-60" 
-                   />
+                   <img src={`https://img.youtube.com/vi/${currentLesson.youtube_id}/maxresdefault.jpg`} className="absolute inset-0 w-full h-full object-cover -z-10 opacity-50 transition-opacity group-hover:opacity-60" />
                  </div>
                ) : (
-                 <iframe 
-                   className="w-full h-full" 
-                   src={`https://www.youtube.com/embed/${currentLesson.youtube_id}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&playsinline=1`} 
-                   allow="autoplay; encrypted-media" 
-                   onLoad={() => setIsLoading(false)} 
-                 />
+                 <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${currentLesson.youtube_id}?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=1&playsinline=1`} allow="autoplay; encrypted-media" onLoad={() => setIsLoading(false)} />
                )}
             </div>
 
-            {/* 2. VIDEO INFO SECTION */}
+            {/* VIDEO INFO */}
             {!isFullScreen && (
               <div className="px-4 md:px-0 py-4 md:py-6 bg-[#120a05]">
                 
-                {/* Title & Chevron */}
                 <div className="flex justify-between items-start mb-4 cursor-pointer group" onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}>
                    <div className="flex-1 pr-4">
-                      <h1 className="text-lg md:text-2xl font-medium text-stone-100 line-clamp-2 leading-snug font-sans group-hover:text-amber-500 transition-colors">
-                        {currentLesson.title}
-                      </h1>
+                      <h1 className="text-lg md:text-2xl font-medium text-stone-100 line-clamp-2 leading-snug font-sans group-hover:text-amber-500 transition-colors">{currentLesson.title}</h1>
                       <div className="text-xs text-stone-500 mt-2 flex items-center gap-2 font-mono">
                          <span className="text-stone-400">Lesson {currentLesson.order}</span>
                          <span className="w-1 h-1 rounded-full bg-stone-600"></span>
                          <span>{selectedLevel.title}</span>
-                         {currentLesson.is_free_sample && <span className="text-emerald-500 font-bold ml-2">FREE</span>}
                       </div>
                    </div>
                    <div className={`p-2 text-stone-500 group-hover:text-white transition-transform duration-300 ${isDescriptionOpen ? 'rotate-180' : ''}`}>
@@ -184,7 +169,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    </div>
                 </div>
 
-                {/* Horizontal Action Buttons */}
+                {/* Actions */}
                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mb-6 pb-2">
                    <ActionButton icon={<ThumbsUp size={18} />} label="Like" />
                    <ActionButton icon={<Share2 size={18} />} label="Share" />
@@ -194,7 +179,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    <ActionButton icon={<MoreVertical size={18} />} />
                 </div>
 
-                {/* Channel Bar */}
+                {/* UPDATED: Channel Bar with Subscribe Logic */}
                 <div className="flex items-center justify-between mb-6 p-3 bg-white/5 rounded-full border border-white/5">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-700 to-stone-900 border border-amber-500/30 overflow-hidden flex items-center justify-center">
@@ -205,12 +190,15 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                          <p className="text-[10px] text-stone-500">Official Instructor</p>
                       </div>
                    </div>
-                   <button className="bg-stone-100 text-black px-5 py-2 rounded-full text-xs font-bold hover:bg-amber-500 hover:text-white transition-colors tracking-wide">
-                      Subscribe
+                   <button 
+                      onClick={handleSubscribe}
+                      className="bg-stone-100 text-black px-5 py-2 rounded-full text-xs font-bold hover:bg-red-600 hover:text-white transition-colors tracking-wide flex items-center gap-2"
+                   >
+                      <Youtube size={14} /> Subscribe
                    </button>
                 </div>
 
-                {/* Expandable Description */}
+                {/* Description */}
                 {isDescriptionOpen && currentLesson.lyrics && (
                    <div className="bg-[#1a0f0a] p-5 rounded-xl text-sm text-stone-300 font-serif leading-loose mb-6 border border-white/5 shadow-inner animate-fade-in">
                       <h4 className="text-amber-500 font-bold mb-3 uppercase text-xs tracking-widest flex items-center gap-2 border-b border-white/5 pb-2">
@@ -220,7 +208,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    </div>
                 )}
 
-                {/* --- SHRINKABLE COMMENTS SECTION --- */}
+                {/* UPDATED: Discussion Section (Link Out) */}
                 <div className="mt-6 border-t border-white/5 pt-2">
                    <button 
                      onClick={() => setIsCommentsOpen(!isCommentsOpen)} 
@@ -230,22 +218,33 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         <h3 className="font-bold text-stone-200">Discussion</h3>
                         <span className="text-xs text-stone-500"> Tap to {isCommentsOpen ? 'close' : 'view'} </span>
                      </div>
-                     {isCommentsOpen ? (
-                        <ChevronUp size={20} className="text-stone-500 group-hover:text-amber-500" />
-                     ) : (
-                        <div className="flex items-center gap-2">
-                           <div className="bg-white/10 px-2 py-1 rounded text-[10px] text-stone-400 font-mono">
-                              <MessageSquare size={12} className="inline mr-1" /> Open
-                           </div>
-                           <ChevronDown size={20} className="text-stone-500 group-hover:text-amber-500" />
-                        </div>
-                     )}
+                     {isCommentsOpen ? <ChevronUp size={20} className="text-amber-500" /> : <ChevronDown size={20} className="text-stone-500 group-hover:text-amber-500" />}
                    </button>
 
-                   {/* Content */}
+                   {/* The "Link Out" Card */}
                    {isCommentsOpen && (
-                      <div className="mt-2 animate-in slide-in-from-top-2 duration-300">
-                         <CommentSection lessonId={currentLesson.id} jwt={jwt} user={user} />
+                      <div className="mt-2 animate-in slide-in-from-top-2 duration-300 px-2 pb-2">
+                         <div className="bg-gradient-to-br from-[#1a0f0a] to-[#25150e] rounded-xl p-6 border border-white/10 text-center shadow-2xl relative overflow-hidden group/card">
+                            
+                            {/* Background Decoration */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-600/10 rounded-full blur-3xl group-hover/card:bg-amber-600/20 transition-all" />
+
+                            <MessageSquare className="w-12 h-12 text-stone-500 mx-auto mb-4" />
+                            
+                            <h4 className="text-stone-200 font-bold text-lg mb-2">Join the Conversation</h4>
+                            <p className="text-stone-400 text-sm mb-6 max-w-sm mx-auto">
+                               Share your thoughts, ask questions, and connect with other students directly on our YouTube channel.
+                            </p>
+
+                            <button 
+                                onClick={handleOpenYoutubeComments}
+                                className="inline-flex items-center gap-2 bg-[#ff0000] hover:bg-[#d90000] text-white px-6 py-3 rounded-full font-bold text-sm transition-transform hover:scale-105 shadow-lg shadow-red-900/30"
+                            >
+                                <Youtube size={18} fill="white" />
+                                Open YouTube Comments
+                                <ExternalLink size={14} className="opacity-70" />
+                            </button>
+                         </div>
                       </div>
                    )}
                 </div>
@@ -257,29 +256,20 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
           {/* --- RIGHT COLUMN: PLAYLIST --- */}
           {!isFullScreen && (
             <div className="w-full lg:w-[32%] px-4 md:px-0 pb-10">
-              
-              {/* Clean Header - No Tags */}
               <div className="flex justify-between items-end mb-4 mt-2 lg:mt-0 pb-2 border-b border-white/5">
                  <h3 className="font-cinzel text-xl text-stone-200">Up Next</h3>
-                 <span className="text-xs text-stone-600 font-mono uppercase tracking-widest">
-                    Autoplay On
-                 </span>
+                 <span className="text-xs text-stone-600 font-mono uppercase tracking-widest">Autoplay On</span>
               </div>
-
               <div className="flex flex-col gap-3">
                 {selectedLevel.lessons.map((lesson, idx) => {
                   const isPlayable = isLevelUnlocked || lesson.is_free_sample;
                   const isActive = currentLesson.id === lesson.id;
-                  
                   return (
                     <div 
                       key={lesson.id} 
                       onClick={() => handleLessonChange(lesson)}
-                      className={`flex gap-3 cursor-pointer group p-2 rounded-lg transition-all duration-300 ${
-                          isActive ? 'bg-amber-900/20 border border-amber-500/20' : 'hover:bg-white/5 border border-transparent'
-                      }`}
+                      className={`flex gap-3 cursor-pointer group p-2 rounded-lg transition-all duration-300 ${isActive ? 'bg-amber-900/20 border border-amber-500/20' : 'hover:bg-white/5 border border-transparent'}`}
                     >
-                      {/* Thumbnail */}
                       <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-black shadow-lg">
                         <img 
                           src={`https://img.youtube.com/vi/${lesson.youtube_id}/mqdefault.jpg`} 
@@ -290,46 +280,23 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                         </div>
                         {isActive && (
                            <div className="absolute inset-0 bg-amber-600/10 flex items-center justify-center">
-                              <div className="bg-black/50 p-1 rounded-full">
-                                <Loader2 size={16} className="text-amber-500 animate-spin" />
-                              </div>
+                              <div className="bg-black/50 p-1 rounded-full"><Loader2 size={16} className="text-amber-500 animate-spin" /></div>
                            </div>
                         )}
                       </div>
-
-                      {/* Info */}
                       <div className="flex flex-col flex-1 min-w-0 pt-0.5 justify-center">
-                        <h4 className={`text-sm font-medium line-clamp-2 leading-snug mb-1 transition-colors ${
-                            isActive ? 'text-amber-400' : 'text-stone-300 group-hover:text-white'
-                        }`}>
+                        <h4 className={`text-sm font-medium line-clamp-2 leading-snug mb-1 transition-colors ${isActive ? 'text-amber-400' : 'text-stone-300 group-hover:text-white'}`}>
                            {lesson.title}
                         </h4>
                         <p className="text-xs text-stone-500 group-hover:text-stone-400">Taodocos Begena</p>
-                        
                         <div className="flex items-center gap-2 mt-1.5">
-                           {lesson.is_free_sample && !isLevelUnlocked && (
-                               <span className="bg-emerald-900/30 text-emerald-400 border border-emerald-500/20 text-[9px] px-1.5 rounded font-bold uppercase">
-                                   Free
-                               </span>
-                           )}
-                           {!isPlayable && (
-                               <span className="bg-stone-800 text-stone-500 text-[9px] px-1.5 rounded uppercase">
-                                   Locked
-                               </span>
-                           )}
-                           {isActive && (
-                               <span className="text-[9px] text-amber-500 font-bold uppercase tracking-wider animate-pulse">
-                                   Playing
-                               </span>
-                           )}
+                           {lesson.is_free_sample && !isLevelUnlocked && <span className="bg-emerald-900/30 text-emerald-400 border border-emerald-500/20 text-[9px] px-1.5 rounded font-bold uppercase">Free</span>}
+                           {!isPlayable && <span className="bg-stone-800 text-stone-500 text-[9px] px-1.5 rounded uppercase">Locked</span>}
+                           {isActive && <span className="text-[9px] text-amber-500 font-bold uppercase tracking-wider animate-pulse">Playing</span>}
                         </div>
                       </div>
-
-                      {/* Kebab Menu */}
                       <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button className="text-stone-500 hover:text-white p-1">
-                            <MoreVertical size={16} />
-                         </button>
+                         <button className="text-stone-500 hover:text-white p-1"><MoreVertical size={16} /></button>
                       </div>
                     </div>
                   );
