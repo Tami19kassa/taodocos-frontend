@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Key, ArrowRight, Music, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { 
+  User, Mail, Key, ArrowRight, Music, AlertCircle, CheckCircle, 
+  Sparkles, Eye, EyeOff 
+} from 'lucide-react';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
@@ -8,6 +11,9 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
   const [view, setView] = useState('login'); // 'login', 'register', 'forgot'
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [resetStatus, setResetStatus] = useState(null);
+  
+  // New State for Password Visibility
+  const [showPassword, setShowPassword] = useState(false);
 
   // Theme Data
   const welcomeTitle = landing?.hero_title || "Taodocos Begena";
@@ -65,7 +71,6 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
         ) : (
           <div className="w-full h-full bg-[#120a05]" />
         )}
-        {/* Cinematic Vignette */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c0a09] via-[#0c0a09]/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0c0a09] via-transparent to-[#0c0a09]/80" />
       </div>
@@ -105,7 +110,7 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="w-full max-w-[480px] relative"
           >
-            {/* Ambient Glow behind card */}
+            {/* Ambient Glow */}
             <div className="absolute -inset-1 bg-gradient-to-b from-amber-600/20 to-transparent rounded-3xl blur-2xl opacity-50" />
             
             <div className="relative bg-[#120a05]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl">
@@ -126,7 +131,7 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
                   </p>
                 </div>
 
-                {/* Tab Switcher (Visual Only, drives logic) */}
+                {/* Tab Switcher */}
                 {view !== 'forgot' && (
                   <div className="flex p-1 bg-black/40 rounded-lg mb-8 border border-white/5">
                     <button 
@@ -181,13 +186,21 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
                       <div className="relative">
                         <Key className="absolute left-4 top-4 text-stone-500 w-5 h-5 group-focus-within:text-amber-500 transition-colors" />
                         <input 
-                          type="password" 
-                          className="w-full bg-[#0a0503] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-600/50 focus:bg-black transition-all"
+                          type={showPassword ? "text" : "password"} 
+                          className="w-full bg-[#0a0503] border border-white/10 rounded-xl py-3.5 pl-12 pr-12 text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-600/50 focus:bg-black transition-all"
                           placeholder="Password"
                           value={formData.password} 
                           onChange={e => setFormData({...formData, password: e.target.value})} 
                           required 
                         />
+                        {/* TOGGLE VISIBILITY BUTTON */}
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-4 text-stone-500 hover:text-stone-300 focus:text-amber-500 transition-colors"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -243,7 +256,6 @@ export default function AuthScreen({ onAuth, loading, authError, landing }) {
               </div>
             </div>
             
-            {/* Disclaimer / Footer */}
             <p className="text-center text-[10px] text-stone-600 mt-6 font-mono">
               © {new Date().getFullYear()} Taodocos Begena. Sacred Tradition.
             </p>
