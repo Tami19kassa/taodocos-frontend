@@ -1,5 +1,4 @@
 
-
 import { useState, useRef, useEffect } from 'react';
 import { 
   Play, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
@@ -8,8 +7,8 @@ import {
 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
 import CommentSection from './CommentSection';
-////
 
+// Channel URL
 const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@taodocostube6869"; 
 export default function Player({ currentLesson, selectedLevel, setCurrentLesson, onExit, isLevelUnlocked, onUnlockRequest }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -77,11 +76,13 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   };
 
   return (
-    <div className={`transition-colors duration-700 ${isFullScreen ? 'bg-black' : 'pt-16 pb-12 px-0 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]'} text-stone-200`}>
+    // FIX: Changed 'pt-16' to 'pt-0 md:pt-24'. 
+    // This removes the top gap on mobile while keeping space for the header on desktop.
+    <div className={`transition-colors duration-700 ${isFullScreen ? 'bg-black' : 'pt-0 md:pt-24 pb-12 px-0 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]'} text-stone-200`}>
         
-        {/* --- HEADER --- */}
+        {/* --- HEADER (Desktop Only) --- */}
         {!isFullScreen && (
-          <div className="hidden md:flex justify-between items-center mb-4 px-4">
+          <div className="hidden md:flex justify-between items-center mb-6 px-4">
             <button 
               onClick={onExit} 
               className="group relative flex items-center gap-4 pl-2 pr-6 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-amber-500/40 hover:bg-amber-950/30 transition-all duration-500 backdrop-blur-md overflow-hidden"
@@ -147,7 +148,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
             {!isFullScreen && (
               <div className="px-4 md:px-0 py-4 md:py-6 bg-[#120a05]">
                 
-                {/* Title & Chevron (Cleaned up spacing) */}
+                {/* Title & Chevron */}
                 <div className="flex justify-between items-start mb-6 cursor-pointer group" onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}>
                    <div className="flex-1 pr-4">
                       <h1 className="text-lg md:text-2xl font-medium text-stone-100 line-clamp-2 leading-snug font-sans group-hover:text-amber-500 transition-colors">{currentLesson.title}</h1>
@@ -162,7 +163,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                    </div>
                 </div>
 
-                {/* Channel Bar (Subscribe Button Included) */}
+                {/* Channel Bar */}
                 <div className="flex items-center justify-between mb-6 p-3 bg-white/5 rounded-full border border-white/5">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-700 to-stone-900 border border-amber-500/30 overflow-hidden flex items-center justify-center">
