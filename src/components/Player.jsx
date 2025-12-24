@@ -1,15 +1,15 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { 
   Play, ChevronLeft, ChevronDown, ChevronUp, Loader2, FileText, 
   Maximize, Lock, Cast, Settings, Subtitles, SkipBack, SkipForward, 
-  ExternalLink, Youtube 
+  Youtube 
 } from 'lucide-react';
 import { renderBlockText } from '@/utils/renderBlockText';
 import CommentSection from './CommentSection';
 
 // Channel URL
 const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@taodocostube6869"; 
+
 export default function Player({ currentLesson, selectedLevel, setCurrentLesson, onExit, isLevelUnlocked, onUnlockRequest }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,26 +76,14 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
   };
 
   return (
-    // FIX: Changed 'pt-16' to 'pt-0 md:pt-24'. 
-    // This removes the top gap on mobile while keeping space for the header on desktop.
     <div className={`transition-colors duration-700 ${isFullScreen ? 'bg-black' : 'pt-0 md:pt-24 pb-12 px-0 md:px-8 max-w-[1600px] mx-auto min-h-screen bg-[#120a05]'} text-stone-200`}>
         
         {/* --- HEADER (Desktop Only) --- */}
         {!isFullScreen && (
-          <div className="hidden md:flex justify-between items-center mb-6 px-4">
-            <button 
-              onClick={onExit} 
-              className="group relative flex items-center gap-4 pl-2 pr-6 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-amber-500/40 hover:bg-amber-950/30 transition-all duration-500 backdrop-blur-md overflow-hidden"
-            >
-               <div className="absolute inset-0 bg-gradient-to-r from-amber-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-               <div className="relative z-10 w-8 h-8 rounded-full bg-stone-800 border border-white/5 flex items-center justify-center group-hover:bg-amber-700 group-hover:border-amber-500 transition-all duration-300 shadow-lg">
-                 <ChevronLeft size={16} className="text-stone-300 group-hover:text-white group-hover:-translate-x-0.5 transition-transform" />
-               </div>
-               <div className="relative z-10 flex flex-col items-start">
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-stone-500 group-hover:text-amber-400 font-bold transition-colors">Return</span>
-                  <span className="font-cinzel text-xs text-stone-300 group-hover:text-white tracking-wide">To Sanctuary</span>
-               </div>
-            </button>
+          // Justify-end because we removed the left button
+          <div className="hidden md:flex justify-end items-center mb-6 px-4">
+            {/* "Return" Button Removed Here */}
+            
             <div className="text-right hidden lg:block opacity-60 hover:opacity-100 transition-opacity">
                <h2 className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-0.5">Current Chapter</h2>
                <span className="font-serif text-sm text-amber-500/80">{selectedLevel.title}</span>
@@ -113,6 +101,7 @@ export default function Player({ currentLesson, selectedLevel, setCurrentLesson,
                {!isPlaying || !isLessonPlayable ? (
                  <div className="absolute inset-0 z-20 flex flex-col justify-between bg-black/40 backdrop-blur-[2px]">
                    <div className="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
+                     {/* Mobile Back Button (Inside video overlay) - KEPT for mobile navigation */}
                      <button onClick={onExit} className="md:hidden text-white hover:text-amber-500"><ChevronLeft size={24} /></button>
                      <div className="hidden md:block"></div>
                      <div className="flex items-center gap-6 text-white opacity-80">
