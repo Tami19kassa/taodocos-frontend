@@ -16,7 +16,7 @@ export default function CommentSection({ youtubeVideoId }) {
         if (data) {
           setComments(data);
         } else {
-          setError(true); // Failed to fetch or No API Key
+          setError(true); 
         }
         setLoading(false);
       });
@@ -27,7 +27,7 @@ export default function CommentSection({ youtubeVideoId }) {
     window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}#comment-section`, '_blank');
   };
 
-  // --- FALLBACK UI (If API Key is missing or Error) ---
+  // --- FALLBACK UI (If Error) ---
   if (error) {
     return (
         <div className="bg-gradient-to-br from-[#1a0f0a] to-[#25150e] rounded-xl p-6 border border-white/10 text-center shadow-2xl relative overflow-hidden group/card mt-2">
@@ -69,7 +69,7 @@ export default function CommentSection({ youtubeVideoId }) {
             <Loader2 className="animate-spin text-amber-500" size={24} />
         </div>
       ) : comments.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-4">
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-3 items-start group animate-in slide-in-from-bottom-2 duration-500">
               {/* Avatar */}
@@ -88,7 +88,6 @@ export default function CommentSection({ youtubeVideoId }) {
                   </span>
                 </div>
                 
-                {/* Comment Text - Uses dangerouslySetInnerHTML for emojis/links from YouTube */}
                 <p className="text-sm text-stone-400 leading-relaxed font-serif" 
                    dangerouslySetInnerHTML={{ __html: comment.text }} 
                 />
@@ -104,13 +103,7 @@ export default function CommentSection({ youtubeVideoId }) {
               </div>
             </div>
           ))}
-          
-          <button 
-            onClick={handleOpenYoutube}
-            className="w-full py-4 text-xs text-stone-500 hover:text-amber-500 border-t border-white/5 mt-4 transition-colors uppercase tracking-widest"
-          >
-            View all comments
-          </button>
+          {/* Button Removed Here */}
         </div>
       ) : (
         <div className="text-center py-8 text-stone-500 text-sm">
