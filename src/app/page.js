@@ -129,16 +129,21 @@ export default function Home() {
   const fetchUserData = async (token, userId) => {
     try {
       setLoading(true);
-      // Fetch owned levels AND owned classes
-      const res = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels&populate=owned_classes`, {
+      
+      // --- FIX: Changed 'owned_classes' to 'live_classes' to match your Strapi ---
+      const res = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels&populate=live_classes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       const u = await res.json();
+      
       setData(prev => ({ 
           ...prev, 
           userOwnedLevels: u.owned_levels || [],
-          userOwnedClasses: u.owned_classes || [] // Store Owned Classes
+          // --- FIX: Map the correct field here too ---
+          userOwnedClasses: u.live_classes || [] 
       }));
+      
       setLoading(false);
     } catch (e) { console.error(e); setLoading(false); }
   };
