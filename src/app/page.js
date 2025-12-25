@@ -32,7 +32,7 @@ export default function Home() {
     levels: [], books: [], teacher: null, landing: null, 
     promotions: [], testimonials: [], audios: [], 
     performances: [], settings: null, 
-    paymentMethods: [], // --- NEW: Store payment methods ---
+    paymentMethods: [], // --- NEW: Payment Methods ---
     userOwnedLevels: [] 
   });
   
@@ -42,7 +42,7 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // 1. INITIALIZATION & STATE RECOVERY
+  // 1. INITIALIZATION
   useEffect(() => {
     fetchPublicData();
     const storedToken = localStorage.getItem('strapi_jwt');
@@ -76,7 +76,6 @@ export default function Home() {
     }
   }, []);
 
-  // AUTO SCROLL TO TOP
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [view]);
@@ -111,8 +110,7 @@ export default function Home() {
         settings: getVal(results[6]) || null,
         audios: getVal(results[7]) || [],
         performances: getVal(results[8]) || [],
-        // --- NEW DATA ---
-        paymentMethods: getVal(results[9]) || [] 
+        paymentMethods: getVal(results[9]) || [] // Store Payment Methods
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -143,7 +141,6 @@ export default function Home() {
         body: JSON.stringify(formData)
       });
       const result = await res.json();
-      
       if (result.error) {
         setAuthError(result.error.message);
         setLoading(false);
@@ -252,11 +249,18 @@ export default function Home() {
        
       <div className="flex-grow relative z-10">
         {view === 'home' && (
-          <div className="">
+          <div>
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            <AudioGallery audios={data.audios} onFolderClick={handleAudioFolderClick} />
+            
+            {/* --- FIX: Added userOwnedLevels prop here --- */}
+            <AudioGallery 
+              audios={data.audios} 
+              onFolderClick={handleAudioFolderClick} 
+              userOwnedLevels={data.userOwnedLevels} 
+            />
+            
             <Library books={data.books} />
             <StudentShowcase performances={data.performances} />
             <Testimonials testimonials={data.testimonials} />
@@ -293,8 +297,8 @@ export default function Home() {
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
         level={selectedLevel} 
-        settings={data.settings}
-        paymentMethods={data.paymentMethods} // --- PASS NEW PROP ---
+        settings={data.settings} 
+        paymentMethods={data.paymentMethods}  
       />
     </main>
   );
