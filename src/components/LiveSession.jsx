@@ -4,12 +4,10 @@ const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 
 export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
   
-  // If no classes exist, hide the section
   if (!classes || classes.length === 0) return null;
 
   const isOwned = (classId) => {
     if (!userOwnedClasses) return false;
-    // Check both ID formats (V4 and V5)
     return userOwnedClasses.some(c => c.id === classId || c.documentId === classId);
   };
 
@@ -17,7 +15,6 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
     <section id="live-sessions" className="py-24 px-4 bg-[#0e0805] relative border-t border-white/5">
       <div className="max-w-7xl mx-auto">
         
-        {/* HEADER */}
         <div className="flex items-center gap-4 mb-12">
           <div className="h-1 w-12 bg-red-600"></div>
           <div>
@@ -26,7 +23,6 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
           </div>
         </div>
 
-        {/* CLASS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {classes.map((item) => {
             const owned = isOwned(item.id);
@@ -37,6 +33,12 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
             const coverUrl = rawUrl 
               ? (rawUrl.startsWith('http') ? rawUrl : `${STRAPI_URL}${rawUrl}`) 
               : null;
+
+            // --- URL FIX ---
+            let meetUrl = item.meet_link || "#";
+            if (meetUrl && !meetUrl.startsWith('http')) {
+              meetUrl = `https://${meetUrl}`;
+            }
 
             return (
               <div key={item.id} className="group relative bg-[#1a0f0a] border border-white/10 rounded-2xl overflow-hidden flex flex-col md:flex-row hover:border-red-500/30 transition-all shadow-xl">
@@ -69,14 +71,15 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
                       </div>
                    </div>
 
+                   {/* Logic Button */}
                    {owned ? (
                      <a 
-                       href={item.meet_link}  
-                       target="_blank"        
+                       href={meetUrl} 
+                       target="_blank"
                        rel="noopener noreferrer"
                        className="flex items-center justify-center gap-2 w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-900/20"
                      >
-                       <Video size={18} /> Open Class App
+                       <Video size={18} /> Enter Classroom
                      </a>
                    ) : (
                      <button 
@@ -84,7 +87,7 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
                        className="flex items-center justify-between w-full bg-white/5 hover:bg-amber-900/20 border border-white/10 hover:border-amber-500/50 text-white font-bold py-3 px-6 rounded-lg transition-all group"
                      >
                        <span className="flex items-center gap-2"><Lock size={16} className="text-amber-600"/> Book Seat</span>
-                       <span className="text-amber-500 font-mono">{item.price} $</span>
+                       <span className="text-amber-500 font-mono">{item.price} ETB</span>
                      </button>
                    )}
                 </div>
