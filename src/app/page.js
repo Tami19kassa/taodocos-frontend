@@ -18,10 +18,8 @@ import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import StudentShowcase from '@/components/StudentShowcase';
 import AudioPlayerView from '@/components/AudioPlayerView';
-import LiveSession from '@/components/LiveSession'; // --- NEW IMPORT ---
-import MeetingRoom from '@/components/MeetingRoom'; // --- NEW IMPORT ---
+import LiveSession from '@/components/LiveSession';  
 
-// --- CONFIGURATION ---
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function Home() {
@@ -327,14 +325,7 @@ export default function Home() {
           <AudioPlayerView folder={selectedAudioFolder} onExit={handleExitPlayer} />
         )}
 
-        {/* --- NEW: MEETING ROOM --- */}
-        {view === 'meeting' && (
-          <MeetingRoom 
-            roomName={activeMeetingRoom}
-            user={user}
-            onExit={() => setView('home')}
-          />
-        )}
+         
       </div>
 
       {view === 'home' && <Footer settings={data.settings} />}

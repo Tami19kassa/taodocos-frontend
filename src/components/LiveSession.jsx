@@ -69,21 +69,22 @@ export default function LiveSession({ classes, userOwnedClasses, onJoin }) {
                       </div>
                    </div>
 
-                   {/* Logic Button: Join if Owned, Pay if Not */}
                    {owned ? (
-                     <button 
-                       onClick={() => onJoin(item)}
+                     <a 
+                       href={item.meet_link}  
+                       target="_blank"        
+                       rel="noopener noreferrer"
                        className="flex items-center justify-center gap-2 w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-900/20"
                      >
-                       <Video size={18} /> Enter Classroom
-                     </button>
+                       <Video size={18} /> Open Class App
+                     </a>
                    ) : (
                      <button 
                        onClick={() => onJoin(item)}
                        className="flex items-center justify-between w-full bg-white/5 hover:bg-amber-900/20 border border-white/10 hover:border-amber-500/50 text-white font-bold py-3 px-6 rounded-lg transition-all group"
                      >
                        <span className="flex items-center gap-2"><Lock size={16} className="text-amber-600"/> Book Seat</span>
-                       <span className="text-amber-500 font-mono">{item.price} ETB</span>
+                       <span className="text-amber-500 font-mono">{item.price} $</span>
                      </button>
                    )}
                 </div>
