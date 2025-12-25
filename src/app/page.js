@@ -31,7 +31,9 @@ export default function Home() {
   const [data, setData] = useState({ 
     levels: [], books: [], teacher: null, landing: null, 
     promotions: [], testimonials: [], audios: [], 
-    performances: [], settings: null, userOwnedLevels: [] 
+    performances: [], settings: null, 
+    paymentMethods: [], // --- NEW: Store payment methods ---
+    userOwnedLevels: [] 
   });
   
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -83,7 +85,7 @@ export default function Home() {
   const fetchPublicData = async () => {
     try {
       const results = await Promise.allSettled([
-         fetch(`${STRAPI_URL}/api/levels?populate=*&sort=rank:asc`).then(r=>r.json()), 
+        fetch(`${STRAPI_URL}/api/levels?populate=*&sort=rank:asc`).then(r=>r.json()), 
         fetch(`${STRAPI_URL}/api/books?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/teacher-profile?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/landing-page?populate=*`).then(r=>r.json()),
@@ -91,7 +93,8 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/testimonials?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/footer?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json()),
-        fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()) ,
+        fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()),
+        // --- NEW FETCH: Payment Methods ---
         fetch(`${STRAPI_URL}/api/payment-methods?populate=*`).then(r=>r.json()) 
       ]);
 
@@ -108,6 +111,7 @@ export default function Home() {
         settings: getVal(results[6]) || null,
         audios: getVal(results[7]) || [],
         performances: getVal(results[8]) || [],
+        // --- NEW DATA ---
         paymentMethods: getVal(results[9]) || [] 
       }));
     } catch (e) {
@@ -126,7 +130,7 @@ export default function Home() {
       setLoading(false);
     } catch (e) { console.error(e); setLoading(false); }
   };
-  
+ 
   // 3. HANDLERS
   const handleAuth = async (formData, isRegistering) => {
     setAuthError('');
@@ -139,6 +143,7 @@ export default function Home() {
         body: JSON.stringify(formData)
       });
       const result = await res.json();
+      
       if (result.error) {
         setAuthError(result.error.message);
         setLoading(false);
@@ -247,17 +252,11 @@ export default function Home() {
        
       <div className="flex-grow relative z-10">
         {view === 'home' && (
-          // CHANGED: Removed 'pt-16'. Now the Hero can touch the top edge behind the navbar.
           <div className="">
             <Hero landing={data.landing} />
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
-            
-            <AudioGallery 
-              audios={data.audios} 
-              onFolderClick={handleAudioFolderClick} 
-              userOwnedLevels={data.userOwnedLevels}
-            />
+            <AudioGallery audios={data.audios} onFolderClick={handleAudioFolderClick} />
             <Library books={data.books} />
             <StudentShowcase performances={data.performances} />
             <Testimonials testimonials={data.testimonials} />
@@ -266,7 +265,6 @@ export default function Home() {
         )}
 
         {view === 'player' && (
-          // Kept padding for player view so content isn't hidden
           <div className="pt-20"> 
             <Player 
               currentLesson={currentLesson} 
@@ -295,8 +293,8 @@ export default function Home() {
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)} 
         level={selectedLevel} 
-        settings={data.settings} 
-        paymentMethods={data.paymentMethods}  
+        settings={data.settings}
+        paymentMethods={data.paymentMethods} // --- PASS NEW PROP ---
       />
     </main>
   );
