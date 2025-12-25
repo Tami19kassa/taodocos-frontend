@@ -18,16 +18,15 @@ import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import StudentShowcase from '@/components/StudentShowcase';
 import AudioPlayerView from '@/components/AudioPlayerView';
-import LiveSession from '@/components/LiveSession';  
+import LiveSession from '@/components/LiveSession';
 
+// --- CONFIGURATION ---
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // View State: 'home', 'player', 'audio_player', 'meeting'
   const [view, setView] = useState('home'); 
   
   const [data, setData] = useState({ 
@@ -35,19 +34,18 @@ export default function Home() {
     promotions: [], testimonials: [], audios: [], 
     performances: [], settings: null, 
     paymentMethods: [], 
-    liveClasses: [], // --- NEW ---
+    liveClasses: [], 
     userOwnedLevels: [],
-    userOwnedClasses: [] // --- NEW ---
+    userOwnedClasses: [] 
   });
   
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [selectedAudioFolder, setSelectedAudioFolder] = useState(null);
-  const [activeMeetingRoom, setActiveMeetingRoom] = useState(null); // --- NEW ---
   const [modalOpen, setModalOpen] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // 1. INITIALIZATION
+  // 1. INITIALIZATION & STATE RECOVERY
   useEffect(() => {
     fetchPublicData();
     const storedToken = localStorage.getItem('strapi_jwt');
@@ -59,23 +57,23 @@ export default function Home() {
       setUser(parsedUser);
       fetchUserData(storedToken, parsedUser.id);
       
-      // RESTORE SESSION
       const lastView = localStorage.getItem('last_view');
+
       if (lastView === 'audio_player') {
         const savedFolder = localStorage.getItem('last_audio_folder');
         if (savedFolder) {
-            setSelectedAudioFolder(JSON.parse(savedFolder));
-            setView('audio_player');
+          setSelectedAudioFolder(JSON.parse(savedFolder));
+          setView('audio_player');
         }
       } else if (lastView === 'player') {
         const savedLevel = localStorage.getItem('last_level');
         const savedLesson = localStorage.getItem('last_lesson');
         if (savedLevel && savedLesson) {
-            setSelectedLevel(JSON.parse(savedLevel));
-            setCurrentLesson(JSON.parse(savedLesson));
-            setView('player');
+          setSelectedLevel(JSON.parse(savedLevel));
+          setCurrentLesson(JSON.parse(savedLesson));
+          setView('player');
         } 
-      }
+      }   
     } else {
       setLoading(false);
     }
@@ -99,7 +97,6 @@ export default function Home() {
         fetch(`${STRAPI_URL}/api/audio-folders?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/student-performances?populate=*`).then(r=>r.json()),
         fetch(`${STRAPI_URL}/api/payment-methods?populate=*`).then(r=>r.json()),
-        // --- NEW FETCH ---
         fetch(`${STRAPI_URL}/api/live-classes?populate=*`).then(r=>r.json())
       ]);
 
@@ -117,7 +114,7 @@ export default function Home() {
         audios: getVal(results[7]) || [],
         performances: getVal(results[8]) || [],
         paymentMethods: getVal(results[9]) || [],
-        liveClasses: getVal(results[10]) || [] // Store Live Classes
+        liveClasses: getVal(results[10]) || []
       }));
     } catch (e) {
       console.error("Fetch Error:", e);
@@ -127,28 +124,21 @@ export default function Home() {
   const fetchUserData = async (token, userId) => {
     try {
       setLoading(true);
-      
-      // --- FIX: Changed 'owned_classes' to 'live_classes' to match your Strapi ---
       const res = await fetch(`${STRAPI_URL}/api/users/${userId}?populate=owned_levels&populate=live_classes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       const u = await res.json();
-      
       setData(prev => ({ 
           ...prev, 
           userOwnedLevels: u.owned_levels || [],
-          // --- FIX: Map the correct field here too ---
           userOwnedClasses: u.live_classes || [] 
       }));
-      
       setLoading(false);
     } catch (e) { console.error(e); setLoading(false); }
   };
  
   // 3. HANDLERS
   const handleAuth = async (formData, isRegistering) => {
-    // ... (Auth Logic Same as before)
     setAuthError('');
     setLoading(true);
     const endpoint = isRegistering ? '/api/auth/local/register' : '/api/auth/local';
@@ -159,6 +149,7 @@ export default function Home() {
         body: JSON.stringify(formData)
       });
       const result = await res.json();
+      
       if (result.error) {
         setAuthError(result.error.message);
         setLoading(false);
@@ -196,18 +187,16 @@ export default function Home() {
     localStorage.setItem('last_audio_folder', JSON.stringify(folder));
   };
 
-  // --- NEW: LIVE CLASS LOGIC ---
+  // --- NEW: SIMPLIFIED JOIN LOGIC ---
   const handleJoinClass = (liveClass) => {
-    // Check ownership
     const isOwned = data.userOwnedClasses?.some(c => c.id === liveClass.id || c.documentId === liveClass.documentId);
     
     if (isOwned) {
-      // ENTER MEETING
-      setActiveMeetingRoom(liveClass.meet_link); 
-      setView('meeting');
+      // The button in LiveSession.jsx handles the link opening.
+      // We don't need to change view here anymore.
+      console.log("Opening Meeting Link...");
     } else {
       // PAY
-      // We adapt the object so the modal understands it (it expects .name)
       const classToBook = { 
           ...liveClass, 
           name: liveClass.title + " (Live Session)" 
@@ -279,8 +268,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a]/95 via-[#1a0f0a]/80 to-[#1a0f0a]/95" />
       </div>
 
-      {/* Hide Navbar during Meeting or Audio */}
-      <div className={view === 'audio_player' || view === 'meeting' ? 'hidden md:block' : 'block'}>
+      <div className={view === 'audio_player' ? 'hidden md:block' : 'block'}>
         <Navbar user={user} onLogout={handleLogout} setView={setView} />
       </div>
        
@@ -291,7 +279,7 @@ export default function Home() {
             <PromotionCarousel promotions={data.promotions} />
             <LevelGrid levels={data.levels} isUnlocked={isUnlocked} onLevelClick={handleLevelClick} />
             
-            {/* --- NEW: LIVE SESSIONS --- */}
+            {/* LIVE SESSIONS */}
             <LiveSession 
               classes={data.liveClasses} 
               userOwnedClasses={data.userOwnedClasses} 
@@ -322,10 +310,11 @@ export default function Home() {
         )}
 
         {view === 'audio_player' && (
-          <AudioPlayerView folder={selectedAudioFolder} onExit={handleExitPlayer} />
+          <AudioPlayerView 
+             folder={selectedAudioFolder}
+             onExit={handleExitPlayer} 
+          />
         )}
-
-         
       </div>
 
       {view === 'home' && <Footer settings={data.settings} />}
